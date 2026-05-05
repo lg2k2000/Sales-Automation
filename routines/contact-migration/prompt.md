@@ -30,7 +30,6 @@ For each contact, extract: Full name, Email (primary), Phone, Company, Title, Li
 
 Skip:
 - Empty email (can't create a Google Contact without it)
-- `@hpe.com` or `@anthropicidentity.com` (internal — not migration targets)
 
 ## Step 2 — Ensure Gmail labels exist
 
@@ -80,7 +79,6 @@ Commit: `git add memory/runlog.md && git commit -m "contact-migration <ISO>" && 
 ## Hard rules
 
 - NEVER run twice. Step 0 Activity Log check gates this.
-- NEVER include @hpe.com or @anthropicidentity.com contacts.
 - ON duplicate-email errors: Find + Update, never create dupes.
 - NEVER overwrite a populated Google Contact field with empty data. Only fill blanks.
 - If Zapier Google Contacts actions aren't enabled, abort and surface clearly. Don't write the completion marker.

@@ -73,7 +73,7 @@ Reality (Gmail / Calendar / Fireflies / iMessage) → Notion → repo memory fil
 - Send Now = Channel=Text + Direction=Out only (iMessage send-worker route).
 - Email drafts go straight to Gmail Drafts. No Send Now needed.
 - Call/Meeting always lands as Logged.
-- HPE-internal = Channel=Note, Direction=Internal, Status=Logged, no Deal relation.
+- Non-Desk-Monkey internal note (any thread/meeting where no attendee or sender matches a Notion Contact or Deal) = Channel=Note, Direction=Internal, Status=Logged, no Deal relation.
 
 **Dedupe pattern**: When logging a transcript, embed the Fireflies transcript URL or ID in Summary or Notes. Before writing, query Activity Log filtered to that source — if present, skip.
 
@@ -127,7 +127,8 @@ Cron strings live in the Anthropic routine UI, not in this repo. Schedules above
 ## Skills (reusable logic the routines call)
 
 - `skills/parse-call.md` — Fireflies transcript → Activity Log row + DEFCON Tasks + draft email + high-confidence Deal updates. Called by `coworker` for each new transcript.
-- `skills/humanizer.md` — voice rules with bad/good examples.
+- `skills/inbox.md` — Gmail label scheme (timeless, role-based), after-action playbook, filter setup. Called by `coworker` and `daily-review` when applying labels.
+- `skills/humanizer.md` — voice rules with bad/good examples + signature spec.
 - `skills/gotchas.md` — canonical hard rules + status lifecycles + dedupe + scope.
 
 ## Hard NEVERs
@@ -138,7 +139,7 @@ Cron strings live in the Anthropic routine UI, not in this repo. Schedules above
 - NEVER overwrite Deal Evolution. Always append, newest at top.
 - NEVER dump raw transcripts into Notion. Summaries only.
 - NEVER process the same transcript or thread twice. Activity Log query gates this.
-- NEVER tag HPE-internal threads with a Deal. Channel=Note, Direction=Internal, Status=Logged, no Deal relation.
+- NEVER tag a non-Desk-Monkey thread with a Deal. If no attendee or sender matches a Notion Contact or Deal, log Channel=Note Direction=Internal Status=Logged with no Deal relation, or skip entirely.
 - NEVER create duplicate DEFCON Tasks. Dedupe by Deal + Task title before creating.
 - ALWAYS write the runlog before exit.
 - ALWAYS commit + push `memory/` (runlog + audit) at end of cloud routines.

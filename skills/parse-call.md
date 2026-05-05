@@ -13,13 +13,11 @@ Convert one Fireflies transcript into Notion records + a draft follow-up email. 
 3. (Optional) Deal page property updates on high-confidence evidence
 4. Draft follow-up email in Gmail Drafts
 
-## Step 1 — HPE-internal filter
+## Step 1 — Non-Desk-Monkey filter
 
-Skip the transcript entirely if BOTH:
-- Every external attendee email is on `@hpe.com` AND
-- No attendee is on a Deal Contact list
+Skip the transcript entirely if NO attendee email matches a row in the Notion Contacts DB AND no attendee is associated with an active Deal.
 
-If the meeting is HPE-internal but interesting (Selling With training, channel update, Strata/Optiv reference), log a single Activity Log row: Channel=Note, Direction=Internal, Status=Logged, Activity=`<meeting title>`, Summary=`<2-3 lines>`, no Deal relation. Then return.
+If the meeting is non-Desk-Monkey but worth keeping a record of (industry briefing, training, internal coordination), log a single Activity Log row: Channel=Note, Direction=Internal, Status=Logged, Activity=`<meeting title>`, Summary=`<2-3 lines>`, no Deal relation. Then return.
 
 ## Step 2 — Idempotency check (Activity Log dedupe)
 

@@ -14,7 +14,7 @@ One-shot cloud routine. Pulls Notion Contacts (Desk Monkey Sales Hub Contacts su
 
 ## What it does
 1. Reads all Notion Contacts from the sub-DB
-2. Skips empty-email rows and @hpe.com / @anthropicidentity.com (internal)
+2. Skips empty-email rows
 3. Ensures Gmail labels exist for each active Deal + triage state buckets
 4. Creates Google Contacts via Zapier; falls back to Find + Update on duplicate-email errors
 5. Marks complete in state.json so it can't run twice by accident

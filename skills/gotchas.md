@@ -9,7 +9,7 @@
 - NEVER touch Forecast Category. Liam's call.
 - NEVER overwrite Deal Evolution. Always append, newest at top.
 - NEVER dump raw transcripts into Notion. Summaries only (2-3 lines).
-- NEVER tag HPE-internal threads with a Deal. Channel=Note, Direction=Internal, Status=Logged, no Deal relation.
+- NEVER tag a non-Desk-Monkey thread with a Deal. If no attendee or sender matches a Notion Contact or Deal, log Channel=Note Direction=Internal Status=Logged with no Deal relation, or skip entirely.
 - NEVER process the same Fireflies transcript twice. Skill State `last_fireflies_id` gates this.
 - NEVER create duplicate DEFCON Tasks. Dedupe by Deal + Task title before creating.
 - NEVER overwrite a populated Google Contact field with empty data on contact-migration. Only fill blanks.
@@ -18,7 +18,7 @@
 
 - **Open Action** → entry awaiting Liam's review or send.
 - **Send Now** → marked for the local send-worker to deliver. ONLY for Channel=Text + Direction=Out. Email drafts go in Gmail Drafts (no Send Now needed).
-- **Logged** → completed. Calls and Meetings always land here. Internal HPE notes always land here with Direction=Internal and no Deal relation.
+- **Logged** → completed. Calls and Meetings always land here. Non-Desk-Monkey internal notes always land here with Direction=Internal and no Deal relation.
 - **Needs Routing** → routine couldn't resolve to a Deal/Contact. Surface for Liam to manually attach.
 - **📦 Archive view** → final resting state.
 
@@ -62,12 +62,17 @@
 - Letting `[IN_PROGRESS]` runlog stubs stay [IN_PROGRESS] because the routine errored mid-run. Wrap work in try/recover, write 🔴 Failed report on exception.
 - DEFCON Tasks created with Owner=blank but no Notes explaining what counterpart owes (verification sweep can't act).
 
-## HPE-internal filter
+## Non-Desk-Monkey filter
 
-These are HPE day-job activity, NOT Desk Monkey deal activity:
-- Selling With training references
-- HPE channel updates
-- Strata / Optiv references
-- Any meeting where every external attendee is on `@hpe.com`
+If a thread, transcript, or calendar event doesn't involve a Notion Contact or Deal, it's not Desk Monkey work. Don't try to route it.
 
-Log as Channel=Note, Direction=Internal, Status=Logged, no Deal relation, or skip entirely if low-signal.
+A meeting/email/transcript counts as Desk Monkey work if at least one external attendee or sender matches:
+- A row in the Notion Contacts DB (`collection://474cee31-b5fe-45e6-906a-b8463eada553`), OR
+- A relation on an active Deal in the Notion Deals DB (`collection://5f892d2b-0d1d-40e2-a6d0-0cd3be6a83c4`)
+
+If neither matches: skip entirely if low-signal, or log as Channel=Note, Direction=Internal, Status=Logged, no Deal relation if there's something worth keeping.
+
+Examples that get skipped:
+- Email noise from any non-Contact domain
+- Internal coordination calls with people not in Contacts
+- Generic notifications, newsletters, system mail
