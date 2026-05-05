@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "notion": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
+    },
+    "gmail": {
+      "type": "http",
+      "url": "https://gmail-mcp.anthropic.com"
+    },
+    "google-calendar": {
+      "type": "http",
+      "url": "https://gcal-mcp.anthropic.com"
+    },
+    "apollo": {
+      "type": "http",
+      "url": "https://apollo-mcp.anthropic.com"
+    }
+  }
+}
