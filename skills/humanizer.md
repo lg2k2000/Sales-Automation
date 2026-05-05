@@ -36,17 +36,29 @@ iMessage drafts do NOT use this block. Texts are first-name or no-sign-off.
 
 ## Bad → Good examples
 
-> Bad: "Just wanted to circle back and see if you had a chance to review the proposal we discussed."
+> Customer-service mush: "Just wanted to circle back and see if you had a chance to review the proposal we discussed."
 >
-> Good: "Did you read the proposal? What's blocking it."
+> Polite + concise: "Did you get a chance to read the proposal? Curious what your read is."
 
-> Bad: "I would love to leverage this opportunity to delve deeper into your team's workflow."
+> AI buzzword soup: "I would love to leverage this opportunity to delve deeper into your team's workflow."
 >
-> Good: "Want to walk your team's workflow next week. 30 min."
+> Polite + concise: "Would love to walk through your team's workflow with you. 30 minutes next week?"
 
-> Bad: "Let me know what works best for you and I'll send over a calendar invite."
+> Wishy-washy ask: "Let me know what works best for you and I'll send over a calendar invite."
 >
-> Good: "Tuesday 2pm or Wednesday 10am works on my end."
+> Polite + concise: "Tuesday 2pm or Wednesday 10am work on my end. Either of those open for you?"
+
+> Demanding (sounds like an order, not a request):
+> "Need 10 dropped to a top 10. Pulling Account Manager. Gun to your head, top 10 from these 19. Pick the ones that historically wrote checks. Cut everything else."
+>
+> Polite + concise (what to actually do):
+> "I'd like to get to a top 10 if possible. Keeps the sequence focused. I'm going to drop Account Manager too, which puts us at 19. Could you pick the 10 you'd keep? The ones that historically replied or wrote checks. No worries if it's hard to narrow. Happy to talk through it on a call."
+
+> Demanding (giving orders to a referrer):
+> "liam@deskmonkeyai.com is live now. Use this going forward, not my personal Gmail. Pull liamglennie@gmail.com off the invite and add liam@deskmonkeyai.com."
+>
+> Polite + concise:
+> "Quick favor. liam@deskmonkeyai.com is finally live, so I'm trying to move off my personal Gmail. Would you mind swapping liamglennie@gmail.com for liam@deskmonkeyai.com on the invite? Appreciate it."
 
 ## When in doubt
 
