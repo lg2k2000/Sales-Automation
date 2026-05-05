@@ -14,7 +14,8 @@ See `architecture.md` for the data flow diagram and `CLAUDE.md` for working memo
 ├── skills/               humanizer voice rules + gotchas
 ├── routines/             cloud routines (coworker, contact-migration, self-audit)
 ├── local-tasks/          Mac-bound tasks (triage, send-worker)
-└── memory/               runlog, audit, state.json
+└── memory/               runlog (append-only), audit (weekly findings)
+                          NOTE: cursors live in Notion Skill State DB, not here
 ```
 
 ## Routines (cloud)
@@ -53,4 +54,6 @@ See `architecture.md` for the data flow diagram and `CLAUDE.md` for working memo
 - **Source of truth**: Reality (iMessage / Gmail / Calendar / Fireflies) → Notion → repo memory files.
 - **Never auto-send externally**: drafts only. Email goes in Gmail Drafts. iMessage waits on the Notion Send Now flag.
 - **Cron lives in the routine UI**: this repo doesn't execute schedules. No GitHub Actions, no cron files. The routine UI is canonical.
-- **Notion is the database**: no Postgres, no separate store. Activity Log + Contacts + Deals collections handle everything.
+- **Notion is the database**: no Postgres, no separate store. Activity Log + Contacts + Deals + DEFCON Tasks + Projects + Skill State collections handle everything.
+- **Anti-dropped-ball**: every action item from a meeting / email / counterpart commitment becomes a DEFCON Task with Owner + Due + DEFCON 1-5 priority. Counterpart-owned tasks get verified daily by sweeping Gmail / Calendar for proof of completion.
+- **State lives in Notion**: operational cursors (last_fireflies_id, last_gmail_sweep, etc.) live in the Skill State DB, not in repo files. This means no git-merge conflicts on cursors and Liam can see state in his dashboard.
