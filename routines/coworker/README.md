@@ -1,38 +1,29 @@
 # coworker
 
-The main cloud routine. Runs 3x weekdays (suggested: 7am, 12pm, 6pm). Sweeps Fireflies + Gmail + Calendar, logs activity to Notion, drafts follow-ups, updates Deal pages on high-confidence evidence. Never sends.
+The tactical loop. Runs 3x weekdays. Past-24h sweep across Fireflies, Gmail, Calendar. Logs Activity, creates DEFCON Tasks, drafts emails. Never sends.
 
 ## Trigger
 - **Schedule:** set in the Anthropic routine UI (suggested `0 7,12,18 * * 1-5`)
-- **Repo:** this one
-- **Connectors needed:** Notion, Gmail, Google Calendar, Fireflies, Zapier (for Send / Archive / Trash / Label / Mark Read actions)
+- **Connectors:** Notion, Gmail, Google Calendar, Fireflies, Zapier (for Gmail per-message label)
 - **Routine prompt:** `Read routines/coworker/prompt.md and follow it exactly. Read CLAUDE.md and skills/* first for context.`
 
-## What it does
+## Scope (in)
+- New Fireflies transcripts → log + DEFCON Tasks + draft (delegates to `skills/parse-call.md`)
+- Unanswered Gmail threads from Deal contacts >24h → log + draft
+- Tomorrow's external Calendar meetings → brief + prep task
 
-**Fireflies sweep.** New transcripts since `last_fireflies_id`. For each: skip if HPE-internal, resolve to Deal, log to Activity Log, update Deal properties on hard evidence, draft Gmail follow-up.
+## Scope (out — handled elsewhere)
+- Counterpart commitment verification → `daily-review`
+- Deal property updates rolled up across multiple activities → `daily-review`
+- Left-on-read prospecting (>5d silence) → `daily-review`
+- Stale Deal sweep → `self-audit` (weekly)
+- iMessage triage and send → local Mac tasks
 
-**Gmail sweep.** Inbox threads from the past 7 days where the last message is from a Deal contact and Liam hasn't replied. Drafts a response in Gmail Drafts, labels the thread per Deal, logs to Activity Log if unanswered >24h.
-
-**Calendar lookahead.** Next 24h of external meetings. Writes a brief on the matching Deal page so Liam has context before walking into the meeting.
-
-## State
-
-Tracks last-processed cursors in `memory/state.json`:
-- `last_fireflies_id`
-- `last_gmail_sweep`
-- `last_calendar_sweep`
-
-This prevents reprocessing across runs.
-
-## Hard NEVERs
-- Never auto-send externally
-- Never advance Deal Stage without explicit commitment
-- Never reprocess a Fireflies transcript
-- Never touch Forecast Category
+## Idempotency
+Every step queries the Activity Log first to check whether the source (Fireflies transcript, Gmail thread, Calendar event) has already been processed. Re-running the routine is safe.
 
 ## See also
-- `prompt.md` — exact instructions
+- `prompt.md` — exact steps
+- `../../skills/parse-call.md` — Fireflies transcript handling
+- `../daily-review/` — the rollup routine
 - `../../CLAUDE.md` — working memory
-- `../../memory/runlog.md` — run history
-- `../../memory/state.json` — cross-run cursors
