@@ -121,7 +121,15 @@ Skip if the transcript is internal-only or unresolved (no Deal).
   - <owner>: <action> by <date>
 
   <one-line next step ask or close>
+
+  Best
+  --
+  Liam Glennie
+  720-431-2310
+  deskmonkeyai.com
   ```
+
+  The signature block is mandatory. First-name-only sign-offs are not acceptable on email drafts. See `skills/humanizer.md` for the full signature spec.
 
   Examples:
 
