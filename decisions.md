@@ -34,7 +34,18 @@ Captures architectural decisions made during the build of Desk Monkey. Each entr
 ### Direct MCPs primary, Zapier fills gaps
 - **Decided:** Use direct MCPs for read AND write whenever they exist. Zapier only for actions direct MCPs don't expose.
 - **Why:** Direct MCPs are faster, free per-call, more structured. Zapier costs Zap tasks per call and has less control over response shape.
-- **Currently filling gaps via Zapier:** Gmail Send / Archive / Trash / Mark Read/Unread / Add Label / Remove Label. Attio access (until/unless a direct Attio MCP is available; treated as if direct in the docs).
+- **Currently filling gaps via Zapier:** Gmail Send / Archive / Trash / Mark Read/Unread / Add Label / Remove Label. Attio fallback only when the direct hosted MCP is missing a needed action.
+
+### Use Attio hosted MCP as primary CRM connector
+- **Decided:** Direct Attio hosted MCP at `https://mcp.attio.com/mcp` is primary for CRM reads and writes. Zapier MCP is fallback only.
+- **Why:** Attio publishes a hosted MCP server with OAuth and a documented capability surface (`search-records`, `list-records`, `get-records-by-ids`, `create-record`, `upsert-record`, `update-record`, `list-attribute-definitions`, `list-lists`, `list-list-attribute-definitions`, `list-records-in-list`, `add-record-to-list`, `create-note`, `list-tasks`, `create-task`, `update-task`). Direct MCP gives structured access without per-call Zap costs and without Zapier's response-shape limitations.
+- **Repo prompts must not hardcode runtime tool-call names.** Cloud Routines may expose a different connector surface than a normal Claude chat. Names like `mcp__Attio__create_record`, `mcp__Attio__assert_record`, `mcp__Attio__update_record_attributes`, `mcp__Attio__find_record`, `mcp__Attio__create_list_entry` are not guaranteed at runtime. Prompts use capability language (e.g. "use the Attio create-note capability") and `skills/attio-tooling.md` runtime preflight maps capability → actual tool.
+- **Runtime preflight is required.** Every routine that touches Attio inspects available connector tools, logs a `TOOL_CONTRACT` line to `memory/runlog.md`, and gracefully degrades on `BLOCKED_TOOL_GAP`. The `connector-diagnostic` routine validates this manually before production runs.
+- **Deal creation uses `create-record` / `upsert-record` semantics** combined with `list-attribute-definitions` for object `deals`. No write happens before the schema lookup. Select-field values that don't match an allowed option are logged as `FIELD_OPTION_GAP` and skipped, not written incorrectly.
+- **Pipeline list membership uses `add-record-to-list`** as a separate action from creating the Deal record itself. Adding to a list is preceded by `list-list-attribute-definitions` for the target list to discover required entry attributes.
+- **Confidence gate on Deal creation.** Routines run unattended without approval prompts. Pipeline pollution is irreversible at scale. Only create a Deal at confidence ≥ 0.80 (real sales meeting, pricing/proposal, POC, migration, renewal pain, explicit next step). Below that, create a Liam-owned review Task.
+- **Browser automation rejected for CRM writes.** Fragile, unsafe in unattended cloud routines, hard to dedupe. Direct MCP + Zapier fallback covers the surface area.
+- **Rejected:** Hardcoding `mcp__Attio__*` names in prompts (silently breaks when the runtime exposes a different name); `assert_record` (not on the hosted MCP surface); browser automation (fragility, dedupe risk); making Zapier the primary Attio path (latency, cost, less structured).
 
 ### Gmail filter creation is not exposed; coworker does it
 - **Decided:** `coworker` Step 2a sweeps inbox every coworker run and labels + archives system noise (newsletters, receipts, notifications) via Zapier `Add Label` and `Archive Email`.

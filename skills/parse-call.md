@@ -2,6 +2,8 @@
 
 Convert one Fireflies transcript into Attio + Gmail records. Called by the `coworker` routine for each new transcript. Apply CLAUDE.md voice rules + `skills/humanizer.md` to all written output.
 
+**Before Step 1**, read `skills/attio-tooling.md` and run Attio preflight if the calling routine has not already done so. All Attio actions below use the capability names from that skill (search records, list records, create record, upsert record, update record, list-attribute-definitions, create-note, list-tasks, create-task, update-task) — not hardcoded MCP function names. If a required Attio capability is missing in the runtime, log `BLOCKED_TOOL_GAP` for that capability and skip only the blocked write step.
+
 ## Inputs
 
 - A single Fireflies transcript (id, url, title, date, attendees, summary, action items, transcript text)
@@ -21,19 +23,25 @@ If the meeting is non-Desk-Monkey but worth keeping a record of (industry briefi
 
 ## Step 2 — Idempotency check (Attio Note dedupe)
 
-`mcp__Attio__list_notes` filtered to the matching Deal Record. Check for any existing Note whose title starts with `MTG-<fireflies_id>`. If found, return early — already processed.
+Use the Attio notes/list notes capability after runtime preflight, filtered to the matching Deal Record. Check for any existing Note whose title starts with `MTG-<fireflies_id>`. If found, return early — already processed.
 
 ## Step 3 — Resolve Deal + Person
 
-Match each external attendee email to a Person Record (`mcp__Attio__find_record` with object_id=`people`, filter by email_address). The Person Record has linked Deal Records — use the most active Deal (Stage NOT IN [Closed Won, Closed Lost, Nurture, On Hold, Unresponsive]).
+Match each external attendee email to a Person Record (use the Attio search/list records capability with object_id=`people`, filter by email_address). The Person Record has linked Deal Records — use the most active Deal (Stage NOT IN [Closed Won, Closed Lost, Nurture, On Hold, Unresponsive]).
 
-If no attendee resolves to a Person Record: attach the Note to a designated "Unrouted" placeholder Record, set the Note title to `MTG-<fireflies_id> — UNROUTED — <meeting title>`, and surface in runlog as needs-review. Skip steps 4-6.
+If no Person Record matches an attendee: do NOT auto-create a Person here. Surface to runlog as `unresolved-attendee` and either route the Note to the "Unrouted" placeholder Record or skip per CLAUDE.md non-Desk-Monkey filter.
+
+If a Person matches but no active Deal exists, follow the Deal creation protocol in `skills/attio-tooling.md`:
+- If the transcript shows strong buying signal (real sales discussion, pricing/proposal, POC, migration, renewal pain, explicit next step), proceed with Deal creation per that protocol — search Companies, search Deals, list-attribute-definitions for `deals`, then create-record / upsert-record. Build the attribute map using only fields that exist and select options that are valid in the workspace.
+- If confidence is below 0.80, do NOT create a Deal. Create a Liam-owned Task instead: `[DEFCON 3] [Pipeline Build] [Liam] Review whether to create Deal for <Company>`, linked to the Person Record. Attach the Note to the Person Record.
+
+If no attendee resolves to a Person Record at all: attach the Note to a designated "Unrouted" placeholder Record, set the Note title to `MTG-<fireflies_id> — UNROUTED — <meeting title>`, and surface in runlog as needs-review. Skip steps 4-6.
 
 If multiple Deals match (rare): pick the most active. Note the ambiguity in runlog.
 
 ## Step 4 — Attio Note creation
 
-`mcp__Attio__create_note` with parent_object=`deals`, parent_record_id=<Deal record ID>, format=`markdown`:
+Use the Attio create-note capability with parent_object=`deals`, parent_record_id=<Deal record ID>, format=`markdown`:
 
 **Title:** `MTG-<fireflies_id> — <meeting title>` (truncate meeting title to fit ~80 chars)
 
@@ -61,7 +69,7 @@ Also attach the same Note (or a brief reference) to the primary attendee's Perso
 
 ## Step 5 — Attio Tasks for action items
 
-For each action item from Step 4, `mcp__Attio__create_task`. Encode DEFCON + Category + Owner in the content/title prefix since Attio Tasks don't support custom attributes natively.
+For each action item from Step 4, use the Attio create-task capability. Encode DEFCON + Category + Owner in the content/title prefix since Attio Tasks don't support custom attributes natively.
 
 **Liam-owned action item:**
 ```
@@ -95,11 +103,11 @@ assignees: []   # empty assignees is the marker for daily-review's verification 
 linked_records: [Deal Record, Person Record]
 ```
 
-**Dedupe before creating:** `mcp__Attio__list_tasks` for this Deal. If an Open Task with similar title (same Owner + similar action) exists, skip creation; instead append a note to that Task's content.
+**Dedupe before creating:** use the Attio list-tasks capability for this Deal. If an Open Task with similar title (same Owner + similar action) exists, skip creation; instead append a note to that Task's content via the Attio update-task capability.
 
 ## Step 6 — Deal Record attribute updates (high-confidence only)
 
-`mcp__Attio__update_record_attributes` on the Deal Record. Only update what the transcript provides hard evidence for. If you'd hedge writing it, skip.
+Use the Attio update-record capability on the Deal Record, after calling `list-attribute-definitions` for object `deals` to confirm attribute slugs and allowed select options. Only update what the transcript provides hard evidence for. If you'd hedge writing it, skip. If a target select value isn't in the allowed options for the workspace, log `FIELD_OPTION_GAP` and skip that field.
 
 - **Stage**: only on explicit verbal commitment. "Yes let's do a POC starting next month" → advance. "Send me an email about it" → no change.
 - **Buyer Behavior Stage**: advance based on observed behavior, not seller activity.

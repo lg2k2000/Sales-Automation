@@ -4,7 +4,13 @@ Rollup. Runs once per weekday evening. Four jobs: prune today's first-pass meeti
 
 This routine is the strategic counterpart to `coworker`. coworker logs and drafts in real-time during the day. daily-review steps back, looks at the day's accumulated Attio Notes, and decides what changed at the Deal level.
 
-## Step 0 — Stub runlog
+## Step 0a — Read the Attio tool contract
+
+Read `skills/attio-tooling.md`. Run the Attio runtime preflight before any CRM action. Append the `TOOL_CONTRACT` line to `memory/runlog.md`. If a required Attio capability is unavailable (search/list records, list-tasks, update-task, list-notes, update-record, list-attribute-definitions, create-task), log `BLOCKED_TOOL_GAP` for it and skip only that section. Continue safe reads.
+
+Do NOT use browser automation for Attio. Do NOT hardcode MCP function names — use the connector tools the runtime actually exposes.
+
+## Step 0b — Stub runlog
 
 Append to `memory/runlog.md`:
 ```
@@ -13,7 +19,7 @@ Append to `memory/runlog.md`:
 
 ## Step 1 — Counterpart commitment verification
 
-Query Attio Tasks where:
+Query Attio Tasks (via the Attio list-tasks capability) where:
 - assignees is empty (counterpart-owned marker)
 - deadline_at < today
 - is_completed = false
@@ -25,8 +31,8 @@ For each:
    - **Calendar invite**: `mcp__Google-Calendar__list_events` filtered to events with the named attendee in the next 14 days.
    - **Email response**: search Gmail for any reply from that contact since the meeting date.
    - **Other**: best-effort search per the description; if unverifiable, treat as no-proof.
-3. **Proof found**: `mcp__Attio__update_task` with is_completed=true. Append to Task content: `<ISO> verified via <where> (<short evidence>)`. Done.
-4. **No proof**: create a follow-up Task for Liam:
+3. **Proof found**: use the Attio update-task capability with is_completed=true. Append to Task content: `<ISO> verified via <where> (<short evidence>)`. Done.
+4. **No proof**: create a follow-up Task for Liam via the Attio create-task capability:
    - content: `[DEFCON 2 if Deal Stage active, else 3] [Follow-up] [Liam] nudge <person> on <original task>`
    - deadline_at: today
    - assignees: [liam@deskmonkeyai.com]
@@ -36,7 +42,7 @@ For each:
 
 ## Step 2 — Prune today's first-pass meeting drafts (anti-AI-pacing)
 
-Query Attio Notes where:
+Query Attio Notes (via the Attio list-notes / list-records capability) where:
 - title starts with `MTG-` (meeting Note)
 - created today
 - content contains `[first-pass draft pending prune]`
@@ -55,7 +61,7 @@ For each match:
    - Restating context the recipient already remembers
    - Anything that sounds like an AI summary
 4. Replace the Gmail draft: delete the old draft via Zapier `Delete Email` (use the message_id from `list_drafts`), create the new draft via `mcp__Gmail__create_draft` with the same `to`, `subject`, and `replyToMessageId` if applicable.
-5. Update the Attio Note: `mcp__Attio__update_record_attributes` (or use a Note-update endpoint if available) — replace `[first-pass draft pending prune]` in the content with `[draft pruned <ISO>]`.
+5. Update the Attio Note via the Attio update-record / Note-update capability after `list-attribute-definitions` if needed. Replace `[first-pass draft pending prune]` in the content with `[draft pruned <ISO>]`. If the runtime's Attio surface lacks a Note-update capability, log `BLOCKED_TOOL_GAP: Attio note-update unavailable` and surface in the run report (the marker stays unchanged; coworker won't reprocess because the Gmail draft still exists, but the Note marker drift needs operator attention).
 
 Apply `skills/humanizer.md` voice rules. Read the pruned version aloud. If it doesn't sound like a peer texting a peer (with a signature), prune more.
 
@@ -63,16 +69,16 @@ Apply `skills/humanizer.md` voice rules. Read the pruned version aloud. If it do
 
 ## Step 3 — Deal Record updates rolled up from today
 
-Query Attio Notes where:
+Query Attio Notes (via the Attio list-notes / list-records capability) where:
 - created today (00:00 local onwards)
 - linked to a Deal Record
 - title starts with one of: `MTG-`, `EMAIL-`, `CALL-` (so we capture meetings, emails, calls; skip system briefs)
 
 Group by Deal Record. For each Deal with new Notes today:
 
-1. Fetch current Deal Record attributes (`mcp__Attio__find_record` by ID, or read directly from the attached Notes' source-of-truth).
+1. Fetch current Deal Record attributes via the Attio get/search/list record capability (by ID), or read directly from the attached Notes' source-of-truth. Before any update write, call `list-attribute-definitions` for object `deals` to confirm attribute slugs and allowed select options.
 2. Read all of today's Notes for this Deal (Summary + Action Items fields).
-3. Apply the Deal property update logic from `skills/parse-call.md` Step 6, but rolled up across all of today's activity rather than per-meeting:
+3. Apply the Deal property update logic from `skills/parse-call.md` Step 6, but rolled up across all of today's activity rather than per-meeting. Use the Attio update-record capability:
    - **Stage**: only on explicit verbal commitment evidenced in any of today's logged activity. If no commitment, no change.
    - **Buyer Behavior Stage**: advance based on observed behavior across the day's activity.
    - **Next Action**: replace with the most recent agreed next step.
@@ -87,16 +93,16 @@ Group by Deal Record. For each Deal with new Notes today:
    - **Buyer-Owned Action Ratio**: recompute based on action items in today's activity (count of empty-assignees Tasks created today / total Tasks created today linked to this Deal).
 4. **Always append Deal Evolution**: one line summarizing today, format `MMM DD, YYYY: <one-line: today's net change at the Deal level>`. Newest at top.
 
-If the day's activity surfaced a Stage gate met (3+ Champion Tests Passed → ready for Qualified, or Buyer-Owned Action Ratio ≥ 50% → ready for Co-Building exit), DO NOT auto-advance Stage. Create an Attio Task: content=`[DEFCON 2] [Internal] [Liam] <Deal>: ready for <new stage> — <evidence>`, deadline_at=tomorrow, assignees=[Liam], linked_records=[Deal].
+If the day's activity surfaced a Stage gate met (3+ Champion Tests Passed → ready for Qualified, or Buyer-Owned Action Ratio ≥ 50% → ready for Co-Building exit), DO NOT auto-advance Stage. Create an Attio Task via the Attio create-task capability: content=`[DEFCON 2] [Internal] [Liam] <Deal>: ready for <new stage> — <evidence>`, deadline_at=tomorrow, assignees=[Liam], linked_records=[Deal].
 
 ## Step 4 — Left-on-read prospecting sweep
 
-Find Attio Deals where:
+Find Attio Deals (via the Attio list-records / search-records capability) where:
 - Stage IN [New, Discovery, Qualified, POC] (active early-stage)
 - Last sent email from Liam was >7 days ago (search Gmail `from:me to:<contact email> newer_than:14d` and check most recent date)
 - No reply from contact since that send
 
-For each, before creating a nudge: query Attio Tasks for an existing Open `[Follow-up] [Liam] soft nudge <contact>` task. If exists, skip. Otherwise create:
+For each, before creating a nudge: query Attio Tasks (list-tasks capability) for an existing Open `[Follow-up] [Liam] soft nudge <contact>` task. If exists, skip. Otherwise create via the Attio create-task capability:
 - content: `[DEFCON 3] [Follow-up] [Liam] soft nudge <contact name> on <last subject>`
 - deadline_at: today + 1
 - assignees: [liam@deskmonkeyai.com]
@@ -128,7 +134,10 @@ Commit: `git add memory/runlog.md && git commit -m "daily-review <ISO>" && git p
 - NEVER touch Forecast Category.
 - NEVER overwrite Deal Evolution. Append, newest at top.
 - NEVER mark a counterpart-owned Task complete without proof. Document the proof in Task content.
-- NEVER create a duplicate nudge Task. Check existing Open tasks first.
+- NEVER create a duplicate nudge Task. Check existing Open tasks first via the Attio list-tasks capability.
 - NEVER write to Notion CRM DBs. Attio is canonical.
+- NEVER hardcode Attio MCP function names. Use capability names from `skills/attio-tooling.md`. The runtime decides the actual tool.
+- NEVER write Deal fields without first calling `list-attribute-definitions` for object `deals`.
+- NEVER use browser automation for Attio writes.
 - ALWAYS write the runlog before exit.
 - ALWAYS commit + push.

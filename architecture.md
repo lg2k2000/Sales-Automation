@@ -112,38 +112,45 @@ flowchart TB
 | Fireflies | meeting transcripts (bot joins via calendar invite, transcribes any platform) | `mcp__Fireflies__fireflies_get_transcripts` | coworker |
 | Gmail | inbound emails to deskmonkeyai.com | `mcp__Gmail__search_threads` + `get_thread` | coworker, daily-review |
 | Google Calendar | upcoming meetings, accepted invites | `mcp__Google-Calendar__list_events` | coworker, daily-review |
-| Attio | manual entries by Liam (Deal updates, Notes, Tasks) | `mcp__Attio__find_record`, `mcp__Attio__list_notes`, `mcp__Attio__list_tasks` | all routines |
+| Attio | manual entries by Liam (Deal updates, Notes, Tasks) | Attio search/list records capability + Attio notes capability + Attio tasks capability (via direct hosted MCP at `https://mcp.attio.com/mcp`, after runtime preflight from `skills/attio-tooling.md`) | all routines |
 
 ## Brain: routines and what each does
 
 ### `coworker` — tactical 24h loop
 - **Cadence:** 2x weekdays (suggested 8am, 4pm). 2x not 3x to fit Pro plan's 5 routine-runs/day cap.
 - **Where:** cloud
-- **Reads:** Fireflies (last 36h transcripts), Gmail (inbox last 7d), Calendar (next 24h), Attio (Notes for dedupe + Deal lookup)
-- **Writes:** Attio Notes (per transcript / email / meeting brief), Attio Tasks (action items, prep tasks), Attio Deal record updates (high-confidence Selling With attributes), Gmail Drafts (via direct `create_draft` MCP)
-- **Skills called:** `parse-call` (per transcript), `humanizer` (per draft body), `inbox` (label per relationship type), `gotchas`
+- **Reads:** Fireflies (last 36h transcripts), Gmail (inbox last 7d), Calendar (next 24h), Attio (Notes for dedupe + Deal lookup via the Attio search/list/notes capabilities)
+- **Writes:** Attio Notes (per transcript / email / meeting brief), Attio Tasks (action items, prep tasks), Attio Deal record updates (high-confidence Selling With attributes — via the Attio update-record capability after `list-attribute-definitions`), Gmail Drafts (via direct `create_draft` MCP). All Attio writes use the hosted MCP write tools after runtime preflight.
+- **Skills called:** `attio-tooling` (preflight first), `parse-call` (per transcript), `humanizer` (per draft body), `inbox` (label per relationship type), `gotchas`
 - **Out of scope:** counterpart verification, Deal rollups across multiple activities, prospecting (all in `daily-review`)
 
 ### `daily-review` — 1x evening rollup
 - **Cadence:** 1x weekday evening (suggested 6:30pm)
 - **Where:** cloud
-- **Reads:** Attio Tasks (assignee empty + deadline past), Attio Notes (today's), Gmail (proof-of-completion searches), Attio Deals (active early-stage)
-- **Writes:** Attio Tasks (mark complete via `update_task`, create nudges), Attio Deal record updates (rolled up from today's Notes), Gmail Drafts (nudge emails). Plus pruned versions of today's first-pass meeting drafts (anti-AI-pacing).
-- **Skills called:** `humanizer`, `inbox`, `gotchas`
+- **Reads:** Attio Tasks (assignee empty + deadline past), Attio Notes (today's), Gmail (proof-of-completion searches), Attio Deals (active early-stage). Uses Attio search/list/get capabilities.
+- **Writes:** Attio Tasks (mark complete via the Attio update-task capability, create nudges via create-task), Attio Deal record updates (rolled up from today's Notes — via update-record after `list-attribute-definitions`), Gmail Drafts (nudge emails). Plus pruned versions of today's first-pass meeting drafts (anti-AI-pacing).
+- **Skills called:** `attio-tooling` (preflight first), `humanizer`, `inbox`, `gotchas`
 
 ### `self-audit` — weekly drift detection
 - **Cadence:** weekly Sundays 7pm
 - **Where:** cloud
-- **Reads:** `memory/runlog.md` (last 200 lines only), Attio Deals (stale-Deal sweep)
-- **Writes:** `memory/audit.md`, Attio Tasks (stale-deal + critical-bug findings)
-- **Skills called:** `humanizer`, `gotchas`
+- **Reads:** `memory/runlog.md` (last 200 lines only), Attio Deals (stale-Deal sweep — via Attio list-records / search-records capabilities)
+- **Writes:** `memory/audit.md`, Attio Tasks (stale-deal + critical-bug findings — via Attio create-task capability after preflight)
+- **Skills called:** `attio-tooling` (preflight first), `humanizer`, `gotchas`
+
+### `connector-diagnostic` — manual read-only Attio surface check
+- **Cadence:** manual. Before first `contact-migration`, after Attio reauth, after any `BLOCKED_TOOL_GAP` log.
+- **Where:** cloud
+- **Reads:** Attio (tool surface inspection + Deal attribute definitions)
+- **Writes:** `memory/runlog.md` only
+- **Skills called:** `attio-tooling`
 
 ### `contact-migration` — Notion → Attio one-shot
-- **Cadence:** manual, run once
+- **Cadence:** manual, run once. Run `connector-diagnostic` first.
 - **Where:** cloud
 - **Reads:** Notion Contacts DB, Notion Deals DB, Notion Activity Log, Notion DEFCON Tasks
-- **Writes:** Attio People + Companies + Deals + Notes + Tasks. After completion, an Attio Note marker captures completion.
-- **Skills called:** `gotchas`
+- **Writes:** Attio People + Companies + Deals + Notes + Tasks via the upsert-record capability where available; otherwise search-records + create-record / update-record. Deal writes happen only after `list-attribute-definitions`. After completion, an Attio Note marker captures completion.
+- **Skills called:** `attio-tooling` (preflight first), `gotchas`
 - **Idempotency:** check Attio for an existing Note titled `MIGRATION-COMPLETE-<date>` on a "Migration" placeholder record. If present, exit.
 
 ## Memory: where state lives
@@ -189,7 +196,7 @@ Routines drop email drafts here via `mcp__Gmail__create_draft`. Liam opens Draft
 | **Create Calendar event (with attendees)** | `mcp__Google-Calendar__create_event` (attendees populated) | **HIGH** — sends invites | **NO** | Routine creates an Attio Task; Liam creates the event manually |
 | Update / delete Calendar event | `mcp__Google-Calendar__update_event` / `delete_event` | MEDIUM — sends notifications | **NO** | Liam-initiated only |
 | Respond to Calendar invite | `mcp__Google-Calendar__respond_to_event` | MEDIUM — sends accept/decline | **NO** | Liam-initiated only |
-| Create / update Attio Record / Note / Task | `mcp__Attio__*` | low | YES | none |
+| Create / update Attio Record / Note / Task | Attio hosted MCP write tools (search/list/create/upsert/update/note/task capabilities) after runtime preflight | low | YES (after Deal-creation confidence gate from `skills/attio-tooling.md`) | none for People/Companies/Notes/Tasks; Deal creation requires confidence ≥ 0.80 or surface to Liam |
 | Create Notion page (Projects DB only) | `mcp__Notion__notion-create-pages` (parent=Projects) | low | YES | none |
 
 ## Risk controls (anti-embarrassing-send)
@@ -211,6 +218,7 @@ Routines drop email drafts here via `mcp__Gmail__create_draft`. Liam opens Draft
 
 | Skill | Used by | What it does |
 |---|---|---|
+| `attio-tooling.md` | every routine that touches Attio | Canonical Attio tool contract, runtime preflight, Deal creation/update protocols, Zapier fallback rules |
 | `humanizer.md` | coworker, daily-review, self-audit | Voice rules + 29 AI patterns to scrub + bad/good examples + signature spec |
 | `gotchas.md` | every routine | Hard NEVERs, status lifecycles, dedupe rules, scope boundaries |
 | `parse-call.md` | coworker | Fireflies transcript → Attio Note + Tasks + Deal updates + draft email |
@@ -220,9 +228,9 @@ Routines drop email drafts here via `mcp__Gmail__create_draft`. Liam opens Draft
 
 Direct MCPs primary. Zapier fills the gaps. Use direct for read AND write whenever it exists.
 
-| Surface | Direct MCP | Zapier |
+| Surface | Direct MCP capability | Zapier (fallback only) |
 |---|---|---|
-| Attio | full CRUD on People / Companies / Deals / Notes / Tasks / Lists | nothing |
+| Attio | search records, list records, get records by ids, create record, upsert record, update record, list attribute definitions, create note, list tasks, create task, update task, list lists, list list attributes, add record to list. Hosted MCP at `https://mcp.attio.com/mcp`. **Use after runtime preflight from `skills/attio-tooling.md`.** | Create or Update Record, Create Note, Create Task, Create or Update List Entry — only when direct Attio is missing the action |
 | Notion | full CRUD on Projects + knowledge pages | nothing |
 | Calendar | full CRUD + invites + suggest_time | nothing |
 | Drive | read/create/copy/search/metadata | Share, Delete |
@@ -230,6 +238,18 @@ Direct MCPs primary. Zapier fills the gaps. Use direct for read AND write whenev
 | Fireflies | transcripts + summaries | nothing |
 | Gmail | search, read, draft, labels (create/list only) | **Send (gated), Archive, Trash, Mark Read/Unread, Add/Remove per-message Label** |
 | Google Contacts | NOT WIRED — Attio handles contact-relationship visibility natively via Gmail integration | NOT NEEDED |
+
+## Attio hosted MCP runtime contract
+
+This system does not hardcode Attio runtime tool-call names. Cloud Routines may expose a different connector surface than a normal Claude chat, so any prompt that names a specific tool (e.g. `mcp__Attio__create_record`) is brittle and may fail silently. Instead:
+
+- Repo prompts describe the desired Attio capability (e.g. "create a Deal record", "list notes on this Deal"), not the exact tool-call syntax.
+- Routines do runtime tool discovery through `skills/attio-tooling.md` preflight. They check which Attio capabilities are actually exposed and log a `TOOL_CONTRACT` line to `memory/runlog.md`.
+- If a required tool is missing for a routine's job, the routine logs `BLOCKED_TOOL_GAP: Attio <capability> unavailable in this routine`, skips only that section, and continues safe reads.
+- Direct Attio hosted MCP at `https://mcp.attio.com/mcp` is primary. It supports OAuth and exposes (at minimum, per Attio's published surface): `search-records`, `list-records`, `get-records-by-ids`, `create-record`, `upsert-record`, `update-record`, `list-attribute-definitions`, `list-lists`, `list-list-attribute-definitions`, `list-records-in-list`, `add-record-to-list`, `create-note`, `list-tasks`, `create-task`, `update-task`.
+- Zapier MCP is fallback only. Used when direct Attio MCP lacks a needed action and only for the fallback list in `skills/attio-tooling.md`.
+- **Browser automation is not allowed for Attio writes.** Fragile, unsafe in unattended cloud routines, hard to dedupe.
+- Deal creation has a confidence gate (≥ 0.80, see `skills/attio-tooling.md`). Below that, the routine creates a Liam-owned review Task instead. Routines run unattended without approval prompts; the gate is the only safeguard against pipeline pollution.
 
 ## Schedule
 
@@ -240,6 +260,7 @@ Cron strings live in the Anthropic routine UI, not in this repo. Listed here as 
 | coworker | Cloud | 2x weekdays (e.g. 8am, 4pm) |
 | daily-review | Cloud | 1x weekday evening (e.g. 6:30pm) |
 | self-audit | Cloud | weekly Sundays 7pm |
+| connector-diagnostic | Cloud | manual, before production runs |
 | contact-migration | Cloud | manual one-shot |
 
 ## Repo sync contract
@@ -257,11 +278,13 @@ Cron strings live in the Anthropic routine UI, not in this repo. Listed here as 
 ├── architecture.md                   # this file
 ├── decisions.md                      # design-decisions log
 ├── skills/
+│   ├── attio-tooling.md              # Attio runtime tool contract + preflight + protocols
 │   ├── parse-call.md                 # Fireflies transcript handler (called by coworker)
 │   ├── inbox.md                      # Gmail label scheme + playbook
 │   ├── humanizer.md                  # voice rules + 29 AI patterns + signature spec
 │   └── gotchas.md                    # hard rules + dedupe + scope
 ├── routines/
+│   ├── connector-diagnostic/{prompt.md,README.md}  # manual read-only Attio surface check
 │   ├── coworker/{prompt.md,README.md}
 │   ├── daily-review/{prompt.md,README.md}
 │   ├── self-audit/{prompt.md,README.md}
