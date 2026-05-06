@@ -34,11 +34,11 @@ Flag for prompt patch:
 
 ## Step 4 — Stale Deal sweep
 
-Query Deals (`collection://5f892d2b-0d1d-40e2-a6d0-0cd3be6a83c4`) where Last Touch is more than 14 days ago AND Stage NOT IN [Closed Won, Closed Lost, Nurture, On Hold, Unresponsive].
+Query Attio Deals where Last Touch is more than 14 days ago AND Stage NOT IN [Closed Won, Closed Lost, Nurture, On Hold, Unresponsive].
 
 For each stale Deal:
-- Check DEFCON Tasks for an existing Open task with Task=`stale Deal: <name>` matching this Deal. Skip if present.
-- Otherwise create a DEFCON Task: Task=`stale Deal: <name> — last touch <date>`, Owner=Liam, DEFCON=3, Category=Follow-up, Source=Internal, Deal relation set, Notes=`14+ day silence; recent Activity Log entries: <count>; current Stage: <stage>`.
+- Check Attio Tasks for an existing Open task with title `[DEFCON 3] [Follow-up] [Liam] stale Deal: <name>` matching this Deal. Skip if present.
+- Otherwise create an Attio Task: content=`[DEFCON 3] [Follow-up] [Liam] stale Deal: <name> — last touch <date>`, deadline_at=today+2, assignees=[liam@deskmonkeyai.com], linked_records=[Deal], description=`14+ day silence; recent Notes count: <N>; current Stage: <stage>`.
 
 ## Step 5 — Write findings to audit.md
 
@@ -63,8 +63,8 @@ Append a new section. The existing-week-header check in Step 0 prevents duplicat
 
 ## Step 6 — Critical-bug escalation
 
-If you see CRITICAL bugs (data loss, sends firing without intent, view-filter blindness, duplicate Activity Log rows, DEFCON Tasks not landing, runlog corrupted):
-- Create a DEFCON Task: Task=`Self-audit critical finding: <one-line>`, Owner=Liam, DEFCON=1, Category=Internal, Source=Internal, Notes=link to relevant runlog entries.
+If you see CRITICAL bugs (data loss, sends firing without intent, view-filter blindness, duplicate Attio Notes, Tasks not landing, runlog corrupted):
+- Create an Attio Task: content=`[DEFCON 1] [Internal] [Liam] Self-audit critical finding: <one-line>`, deadline_at=today, assignees=[liam@deskmonkeyai.com], description=link to relevant runlog entries.
 
 ## Step 7 — Final runlog + commit
 
@@ -88,6 +88,6 @@ Commit: `git add memory/runlog.md memory/audit.md && git commit -m "self-audit w
 ## Hard rules
 
 - READ-ONLY on all prompts and skill files. Propose patches in `audit.md`. Liam applies them.
-- WRITE only to `memory/audit.md`, `memory/runlog.md`, DEFCON Tasks (for stale-deal + critical findings).
+- WRITE only to `memory/audit.md`, `memory/runlog.md`, Attio Tasks (for stale-deal + critical findings).
 - Never re-audit a week already covered. The audit.md header check is the only guard needed.
 - Never read more than the last 200 lines of runlog.

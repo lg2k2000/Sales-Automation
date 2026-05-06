@@ -1,6 +1,6 @@
 # Gotchas
 
-> STUB. Liam: paste your canonical `gotchas.md` from `~/Documents/Claude/Projects/Desk Monkey Brain Context/` over this file when ready. The list below is the recovered rule set, kept here as the starting point.
+Canonical hard rules + status lifecycles + dedupe + scope. Loaded by every routine.
 
 ## Hard NEVERs
 
@@ -8,27 +8,39 @@
 - NEVER advance Deal Stage without explicit verbal commitment from the buyer in a transcript.
 - NEVER touch Forecast Category. Liam's call.
 - NEVER overwrite Deal Evolution. Always append, newest at top.
-- NEVER dump raw transcripts into Notion. Summaries only (2-3 lines).
-- NEVER tag a non-Desk-Monkey thread with a Deal. If no attendee or sender matches a Notion Contact or Deal, log Channel=Note Direction=Internal Status=Logged with no Deal relation, or skip entirely.
-- NEVER process the same Fireflies transcript twice. Activity Log dedupe gates this: query Activity Log for an existing Meeting row referencing the transcript URL or ID before processing.
-- NEVER create duplicate DEFCON Tasks. Dedupe by Deal + Task title before creating.
-- NEVER overwrite a populated Google Contact field with empty data on contact-migration. Only fill blanks.
+- NEVER dump raw transcripts into Attio Notes. Summaries only (2-3 lines).
+- NEVER tag a non-Desk-Monkey thread (no matching Person/Deal Record in Attio) with a Deal. Skip entirely or attach a Note to a "Misc / Internal" placeholder Person Record.
+- NEVER process the same Fireflies transcript twice. Attio Notes title-prefix dedupe gates this: query Notes attached to the matching Deal for a title starting with `MTG-<fireflies_id>` before creating.
+- NEVER create duplicate Attio Notes. Title-prefix source ID is the dedupe key.
+- NEVER create duplicate Attio Tasks. Dedupe by Deal + title prefix before creating.
+- NEVER write to Notion CRM DBs (Contacts/Deals/Activity Log/DEFCON Tasks) from a routine. Those are legacy, archived after migration. Attio is canonical now.
+- NEVER overwrite a populated Attio attribute with empty data on the migration. Only fill blanks.
 
-## Status lifecycle (Activity Log)
+## Attio Note title conventions
 
-- **Open Action** → entry awaiting Liam's review or send.
-- **Send Now** → reserved Notion status value (no current routine writes or reads it). Was the iMessage send-worker queue marker; that flow is not currently wired.
-- **Logged** → completed. Calls and Meetings always land here. Non-Desk-Monkey internal notes always land here with Direction=Internal and no Deal relation.
-- **Needs Routing** → routine couldn't resolve to a Deal/Contact. Surface for Liam to manually attach.
-- **📦 Archive view** → final resting state.
+Every Note attached to a Deal Record has a title-prefix for dedupe + browseability:
 
-## Status lifecycle (DEFCON Tasks)
+- `MTG-<fireflies_id> — <meeting title>` — meeting from Fireflies
+- `EMAIL-<gmail_thread_id> — <subject>` — email thread snapshot
+- `BRIEF-<calendar_event_id> — <meeting title>` — pre-meeting prep brief
+- `CALL-<YYYY-MM-DD> — <topic>` — manual phone call log
+- `NOTE-<YYYY-MM-DD> — <topic>` — manual general note
+- `LEGACY-<notion_page_id_short> — <activity>` — migrated from Notion Activity Log
+- `MIGRATION-COMPLETE-<date>` — migration tracker marker
 
-- **Open** → not yet started.
-- **In Progress** → actively being worked.
-- **Blocked** → waiting on someone or something. Notes must say what.
-- **Done** → completed.
-- **Killed** → decided not to do. Different from Done.
+## Attio Task title conventions
+
+Title prefix encodes DEFCON + Category + Owner since Attio Tasks don't expose custom attributes via the API:
+
+`[DEFCON <1-5>] [<Category>] [<Owner>] <action description>`
+
+- DEFCON: 1 (drop everything) → 5 (nice to have)
+- Category: Apollo Setup / Pipeline Build / Email Infrastructure / Client Deliverable / Data Cleanup / Meeting Prep / Follow-up / Internal
+- Owner: `Liam` if Liam-owned (assignees=[liam@...]); `<counterpart name>` if counterpart-owned (assignees=[])
+
+Status semantics in title (when state is needed beyond is_completed):
+- Append `[BLOCKED]` to content if waiting on someone (with verification path)
+- Append `[KILLED]` and set is_completed=true if decided not to do
 
 ## DEFCON levels
 
@@ -38,40 +50,49 @@
 - **DEFCON 4** → next week or two. Maintenance, slow-moving deal.
 - **DEFCON 5** → nice to have. Backlog.
 
+## Counterpart-owned task pattern
+
+- assignees field in Attio Task is empty
+- Title prefix Owner = `<counterpart name>`
+- Description includes verification path: "Verify via <Gmail attachment from <email> | Calendar event with <email> | Notion shared doc | etc.>"
+- daily-review sweeps these past their deadline_at and creates Liam-owned nudge tasks if no proof of completion
+
 ## Dedupe rules
 
-- Activity Log: don't duplicate for the same Fireflies transcript or same Gmail thread (use thread_id and meeting_id).
-- DEFCON Tasks: dedupe by Deal relation + Task title before creating (use search/query).
-- Activity Log: embed source ID (Fireflies URL, Gmail thread ID, Calendar event ID) in Summary or Notes. Query before writing. If a row already references that source, skip.
-- Audit: never re-audit a week already in audit.md. Check headers first.
+- **Attio Notes**: title-prefix source ID. Always query `mcp__Attio__list_notes` for the parent Deal Record before creating; if title prefix matches, skip.
+- **Attio Tasks**: title-prefix Deal + Category + Owner + action keywords. Query `mcp__Attio__list_tasks` for this Deal; if a similar Open task exists, append to that Task's content rather than creating a duplicate.
+- **Audit**: never re-audit a week already in audit.md. Check headers first.
+- **Migration**: never run twice. Attio Migration Tracker Note marker gates this.
 
 ## Scope (what's in vs out)
 
-- **coworker** = Fireflies + Gmail + Calendar sweep, Activity Log + DEFCON Tasks + Deal updates + first-pass meeting drafts + inbox noise classification. NOT iMessage. NOT Slack. NOT outbound Apollo sequences (yet).
-- **daily-review** = evening rollup. Prunes today's first-pass meeting drafts. Verifies counterpart commitments. Rolls Deal property updates across today's activity. Left-on-read prospecting.
-- **self-audit** = bounded read of last 200 lines of runlog + stale-deal sweep. Never reads the whole runlog.
-- **contact-migration** = one-shot Notion → Google Contacts. NOT a recurring sync.
+- **coworker** = Fireflies + Gmail + Calendar sweep, Attio Notes + Tasks + Deal updates + first-pass Gmail drafts + inbox noise classification. NOT iMessage. NOT Slack. NOT outbound Apollo sequences (yet).
+- **daily-review** = evening rollup. Prunes today's first-pass meeting drafts. Verifies counterpart commitments (Attio Task sweep). Rolls Deal property updates across today's Notes. Left-on-read prospecting.
+- **self-audit** = bounded read of last 200 lines of runlog + stale-deal sweep on Attio. Never reads the whole runlog.
+- **contact-migration** = one-shot Notion CRM → Attio. NOT a recurring sync. Idempotent via Migration Tracker Note marker.
 
 ## Common drift to watch for
 
-- Drafting in customer-service voice (em dashes, AI vocab, "circling back"). Read aloud test.
-- Updating Stage on weak signals like "send me an email about it".
-- Creating duplicate Activity Log entries for the same Fireflies transcript or Gmail thread.
-- Forgetting to embed source ID in Activity Log row Summary/Notes (next run reprocesses everything because dedupe query can't match).
+- Drafting in customer-service voice (em dashes, AI vocab, "circling back"). Read aloud test. See `skills/humanizer.md` for the 29 AI patterns.
+- Updating Deal Stage on weak signals like "send me an email about it".
+- Creating duplicate Attio Notes for the same Fireflies transcript or Gmail thread (forgetting the title-prefix dedupe).
+- Creating duplicate Attio Tasks (forgetting to query existing tasks first).
+- Forgetting to embed source ID in Note title (next run reprocesses everything because dedupe query can't match).
 - Letting `[IN_PROGRESS]` runlog stubs stay [IN_PROGRESS] because the routine errored mid-run. Wrap work in try/recover, write 🔴 Failed report on exception.
-- DEFCON Tasks created with Owner=blank but no Notes explaining what counterpart owes (verification sweep can't act).
+- Counterpart-owned tasks created with assignees=[liam@...] (verification sweep can't act). assignees MUST be empty for counterpart-owned.
+- Writing to Notion Contacts / Deals / Activity Log / DEFCON Tasks DBs (those are legacy; write to Attio).
 
 ## Non-Desk-Monkey filter
 
-If a thread, transcript, or calendar event doesn't involve a Notion Contact or Deal, it's not Desk Monkey work. Don't try to route it.
+If a thread, transcript, or calendar event doesn't involve a Person Record or Deal Record in Attio, it's not Desk Monkey work. Don't try to route it.
 
 A meeting/email/transcript counts as Desk Monkey work if at least one external attendee or sender matches:
-- A row in the Notion Contacts DB (`collection://474cee31-b5fe-45e6-906a-b8463eada553`), OR
-- A relation on an active Deal in the Notion Deals DB (`collection://5f892d2b-0d1d-40e2-a6d0-0cd3be6a83c4`)
+- A Person Record in Attio (find_record by email_addresses)
+- Linked to an active Deal Record (Stage NOT IN [Closed Won, Closed Lost, Nurture, On Hold, Unresponsive])
 
-If neither matches: skip entirely if low-signal, or log as Channel=Note, Direction=Internal, Status=Logged, no Deal relation if there's something worth keeping.
+If neither matches: skip entirely if low-signal, or attach a Note to a designated "Misc / Internal" Person Record if there's something worth keeping.
 
 Examples that get skipped:
-- Email noise from any non-Contact domain
-- Internal coordination calls with people not in Contacts
-- Generic notifications, newsletters, system mail
+- Email noise from any non-Person-Record domain
+- Internal coordination calls with people not in Attio People
+- Generic notifications, newsletters, system mail (handled by coworker Step 2a noise classification)
