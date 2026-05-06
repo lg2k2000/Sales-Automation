@@ -268,6 +268,23 @@ Reframe commanding language as questions:
 - "Let me know" → "Curious what you think"
 - "Cut X" → "Could we drop X?"
 
+### Scheduling: offer specific times, never ask
+
+Liam's time is the constraint. Pull his calendar (Google Calendar `suggest_time` against his primary), pick 2-3 windows, **offer those windows**. Never ask "what works for you?" or "let me know your availability."
+
+This applies in three places:
+- **Email drafts** that propose a meeting, call, review, or any time-bound coordination.
+- **Attio Tasks** where the next step is scheduling. Task content lists the specific offered windows, not "coordinate" or "find a time."
+- **Notion plan entries** that capture scheduled work. List the offered windows so they're auditable.
+
+> Bad: "Worth a quick review on Friday? Let me know what works."
+> Good: "For a 20-min review Friday May 15: 10am CT or 2pm CT work on my end. Either fit?"
+
+> Bad task: "[Counterpart] Coordinate dialer support availability for week of May 18."
+> Good task: "[Liam] Send Miles three dialer-support windows from his calendar: Tue May 19 10am-12pm CT, Wed May 20 1pm-3pm CT, Thu May 21 10am-12pm CT."
+
+Async fallback only if every offered window misses ("if none of these fit, happy to send it over and pick up async notes"). Still no open-ended ask. Liam never sends a Calendar invite autonomously (per CLAUDE.md hard NEVER); the routine surfaces the offered windows in a draft and a Task, Liam confirms with the counterpart and creates the invite.
+
 ---
 
 ## Bad → Good examples (Desk Monkey context)
