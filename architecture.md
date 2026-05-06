@@ -5,9 +5,8 @@ Designed around one principle: **maximum automation with zero risk of embarrassi
 ## TL;DR
 
 - **Two surfaces Liam interacts with:** Notion (dashboard + control) and Gmail (inbox + drafts).
-- **Two cloud routines:** `coworker` (3x weekdays, tactical sweep) and `daily-review` (1x evening, rollup).
-- **Two local Mac tasks:** `triage` (iMessage inbound) and `send-worker` (iMessage outbound from Notion queue).
-- **Two human review queues:** Gmail Drafts (email) and Notion Send Now Queue (iMessage).
+- **Four cloud routines:** `coworker` (3x weekdays, tactical sweep), `daily-review` (1x evening, rollup), `self-audit` (weekly), `contact-migration` (manual one-shot).
+- **One human review queue:** Gmail Drafts. Liam reviews + clicks Send.
 - **One canonical state store:** Notion. The Activity Log doubles as the dedupe ledger.
 
 ## How Liam interacts (read this first)
@@ -16,7 +15,6 @@ Liam looks at exactly two places:
 
 ### Notion (dashboard + control)
 - **🚨 DEFCON Tasks** (My Open Tasks view) — what needs attention, sorted by DEFCON 1-5
-- **⚡ Send Now Queue** (Activity Log filtered to Status=Send Now) — iMessage drafts ready to fire when Liam flips the flag
 - **🧾 Activity Log** (Status=Open Action filter) — anything else flagged
 - **📈 Deals** — Selling With pipeline
 - **👤 Contacts** — people directory
@@ -30,11 +28,10 @@ That's it. Liam never reads the runlog, never opens the repo unless changing pro
 
 ### Daily flow
 
-1. Open Gmail. Inbox has 0-15 items (auto-filters caught the noise). Process each in 30 seconds: action / waiting / reference / archive.
+1. Open Gmail. Inbox has 0-15 items (coworker noise-classification swept the rest). Process each in 30 seconds: action / waiting / reference / archive.
 2. Open Notion DEFCON Tasks. Work top-down by DEFCON.
-3. Check Send Now Queue. Review iMessage drafts. Flip Status=Send Now to fire.
-4. Check Gmail Drafts. Review email drafts. Edit. Click Send.
-5. End of day: inbox empty, DEFCON dashboard clear of urgent items.
+3. Check Gmail Drafts. Review email drafts. Edit. Click Send.
+4. End of day: inbox empty, DEFCON dashboard clear of urgent items.
 
 ## Top-level data flow
 
@@ -44,7 +41,6 @@ flowchart TB
         FF[Fireflies<br/>transcripts]
         GMI[Gmail inbound]
         CAL[Calendar events]
-        IMSG[iMessage inbound]
         MAN[Liam manual<br/>Notion entries]
     end
 
@@ -53,7 +49,6 @@ flowchart TB
         DR[daily-review<br/>1x evening<br/>rollup]
         SA[self-audit<br/>weekly<br/>drift + stale]
         CM[contact-migration<br/>manual one-shot]
-        TRG[triage local<br/>hourly<br/>iMessage in]
     end
 
     subgraph Skills["📚 Skills (reusable)"]
@@ -76,14 +71,12 @@ flowchart TB
         AU[audit.md<br/>weekly findings]
     end
 
-    subgraph Review["👀 REVIEW QUEUES — human gates"]
+    subgraph Review["👀 REVIEW QUEUE — human gate"]
         GD[Gmail Drafts<br/>email review]
-        SN[Notion Send Now<br/>iMessage review]
     end
 
     subgraph Egress["📤 EGRESS — Liam-gated only"]
         EM[Email send<br/>Liam clicks Send in Gmail]
-        TX[iMessage send<br/>send-worker fires on flag flip]
     end
 
     Ingress --> Brain
@@ -110,8 +103,7 @@ flowchart TB
 | Fireflies | meeting transcripts (bot joins via calendar invite, transcribes any platform) | `mcp__Fireflies__fireflies_get_transcripts` | coworker |
 | Gmail | inbound emails to deskmonkeyai.com | `mcp__Gmail__search_threads` + `get_thread` | coworker, daily-review |
 | Google Calendar | upcoming meetings, accepted invites | `mcp__Google-Calendar__list_events` | coworker, daily-review |
-| iMessage | inbound texts to Liam's iPhone | local stdio MCP reads `chat.db` | triage (local) |
-| Notion | manual entries by Liam (Activity Log Instructions, Deal updates, etc.) | `mcp__Notion__notion-query-database-view` | all routines |
+| Notion | manual entries by Liam (Activity Log rows for ad-hoc notes, Deal updates, etc.) | `mcp__Notion__notion-query-database-view` | all routines |
 
 ## Brain: routines and what each does
 
@@ -144,20 +136,6 @@ flowchart TB
 - **Writes:** Google Contacts (via Zapier), Activity Log (completion marker)
 - **Skills called:** `gotchas`
 
-### `triage` (local Mac) — iMessage inbound
-- **Cadence:** hourly weekdays 8-18
-- **Where:** local Mac (iMessage MCP is stdio-only, can't run cloud)
-- **Reads:** iMessage chat.db, Notion Activity Log (Instruction field)
-- **Writes:** Notion Activity Log (logged texts + drafts in Raw Content)
-- **Skills called:** `humanizer`, `gotchas`
-
-### `send-worker` (local Mac) — iMessage outbound
-- **Cadence:** every 15 min weekdays 8-18
-- **Where:** local Mac
-- **Reads:** Notion Activity Log filtered to Status=Send Now + Channel=Text + Direction=Out
-- **Writes:** iMessage send (real send to recipient), Notion status flip to Logged
-- **Skills called:** `gotchas`
-
 ## Memory: where state lives
 
 ### Notion (canonical)
@@ -174,13 +152,10 @@ flowchart TB
 ### What's NOT in memory
 No state.json. No Skill State DB used by routines. No Postgres. The Activity Log handles dedupe; audit.md headers handle "did I run this week"; an Activity Log Note row handles contact-migration completion.
 
-## Review queues: human gates between brain and egress
+## Review queue: human gate between brain and egress
 
 ### Gmail Drafts (email)
-Routines drop email drafts here via `mcp__Gmail__create_draft`. Liam opens Drafts, reviews, edits, clicks Send. **Routines never call Zapier `Send Email` directly.** That's the gate.
-
-### Notion Send Now Queue (iMessage)
-Routines (specifically local `triage`) drop iMessage drafts as Activity Log rows with Channel=Text + Direction=Out + Status=Open Action + Raw Content holding the draft body. Liam reviews, optionally edits Raw Content, then flips Status to Send Now (optionally with Send At for delayed sends). The local `send-worker` polls every 15 min and sends Status=Send Now rows.
+Routines drop email drafts here via `mcp__Gmail__create_draft`. Liam opens Drafts, reviews, edits, clicks Send. **Routines never call Zapier `Send Email` directly.** That's the only gate that matters.
 
 ## Egress: every action that can leave the system
 
@@ -202,15 +177,13 @@ Every send-capable action and what gates it.
 | Respond to Calendar invite | `mcp__Google-Calendar__respond_to_event` | MEDIUM — sends accept/decline | **NO** | Liam-initiated only |
 | Create / update Notion row | `mcp__Notion__notion-create-pages` / `update-page` | low | YES | none |
 | Create / update Google Contact | Zapier `Google Contacts: Create / Update` | low | YES (only in `contact-migration`) | one-shot routine, gated by Activity Log marker |
-| **Send iMessage** | local stdio MCP send tool | **HIGH** | **NO** autonomous | Notion Send Now flag → `send-worker` fires within 15 min |
 
 ## Risk controls (anti-embarrassing-send)
 
-**No routine, ever, autonomously sends external email or external iMessage or Calendar invite-emails.** Every send goes through a human review gate:
+**No routine, ever, autonomously sends external email or Calendar invite-emails.** Every send goes through a human review gate:
 
 1. **Email** — only via direct `create_draft` MCP. Goes to Gmail Drafts. Liam reviews + clicks Send. Routines never call Zapier `Send Email` or `Reply to Email`.
-2. **iMessage** — only via local `send-worker` reading Notion Send Now Queue. Liam flips the flag.
-3. **Calendar invites with attendees** — routines never create these autonomously. They surface a DEFCON Task ("schedule call with X for Y date") and Liam creates the event manually.
+2. **Calendar invites with attendees** — routines never create these autonomously. They surface a DEFCON Task ("schedule call with X for Y date") and Liam creates the event manually.
 
 **Other risk mitigations:**
 - Drafts always carry the full Liam Glennie signature block (CLAUDE.md voice rules). Reduces "looks like an AI bot" risk.
@@ -223,7 +196,7 @@ Every send-capable action and what gates it.
 
 | Skill | Used by | What it does |
 |---|---|---|
-| `humanizer.md` | coworker, daily-review, self-audit, triage | Voice rules + bad/good examples + signature spec |
+| `humanizer.md` | coworker, daily-review, self-audit | Voice rules + bad/good examples + signature spec |
 | `gotchas.md` | every routine | Hard NEVERs, status lifecycles, dedupe rules, scope boundaries |
 | `parse-call.md` | coworker | Fireflies transcript → Activity Log + DEFCON Tasks + Deal updates + draft email |
 | `inbox.md` | coworker, daily-review | Gmail label scheme, after-action playbook, label-by-relationship-type logic |
@@ -250,8 +223,6 @@ Cron strings live in the Anthropic routine UI, not in this repo. Listed here as 
 
 | Job | Where | Suggested cadence |
 |---|---|---|
-| triage | Local Mac | hourly 8-18 weekdays |
-| send-worker | Local Mac | */15 8-18 weekdays |
 | coworker | Cloud | 3x weekdays (e.g. 7am, 12pm, 6pm) |
 | daily-review | Cloud | 1x weekday evening (e.g. 6:30pm) |
 | self-audit | Cloud | weekly Sundays 7pm |
@@ -259,8 +230,8 @@ Cron strings live in the Anthropic routine UI, not in this repo. Listed here as 
 
 ## Repo sync contract
 
-- **Cloud routines:** fresh clone → work → `git add memory/runlog.md memory/audit.md && git commit && git push`. State changes go to Notion, not git.
-- **Local tasks:** `git pull --rebase` before, push runlog after.
+- **Cloud routines:** fresh clone → work → `git add memory/runlog.md memory/audit.md && git commit && git push origin main`. State changes go to Notion, not git.
+- All commits push directly to `main`. No ephemeral session branches.
 - **Conflicts:** surface as Drift in runlog. Liam resolves manually.
 
 ## Repo structure
@@ -269,8 +240,8 @@ Cron strings live in the Anthropic routine UI, not in this repo. Listed here as 
 .
 ├── CLAUDE.md                         # auto-loaded; voice + tool routing + critical rules
 ├── README.md                         # operator setup
-├── .mcp.json                         # local Claude Code config (Notion only; cloud connectors via routine UI)
 ├── architecture.md                   # this file
+├── decisions.md                      # design-decisions log
 ├── skills/
 │   ├── parse-call.md                 # Fireflies transcript handler (called by coworker)
 │   ├── inbox.md                      # Gmail label scheme + playbook
@@ -281,9 +252,6 @@ Cron strings live in the Anthropic routine UI, not in this repo. Listed here as 
 │   ├── daily-review/{prompt.md,README.md}
 │   ├── self-audit/{prompt.md,README.md}
 │   └── contact-migration/{prompt.md,README.md}
-├── local-tasks/
-│   ├── triage/SKILL.md
-│   └── send-worker/SKILL.md
 └── memory/
     ├── runlog.md                     # append-only
     └── audit.md                      # weekly findings

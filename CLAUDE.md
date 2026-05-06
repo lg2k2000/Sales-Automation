@@ -18,8 +18,6 @@ Liam Glennie
 deskmonkeyai.com
 ```
 
-iMessage drafts skip the signature block (texts are first-name or no-sign-off territory). The signature applies to email only.
-
 ## Tool routing
 
 Direct MCPs primary. Zapier fills gaps. Use direct for read AND write whenever it exists.
@@ -38,7 +36,7 @@ Currently enabled in Zapier: Gmail + Google Calendar. Contacts not yet enabled �
 
 ## Source of truth
 
-Reality (Gmail / Calendar / Fireflies / iMessage) → Notion → repo memory files.
+Reality (Gmail / Calendar / Fireflies) → Notion → repo memory files.
 
 - **Notion = canonical AND dedupe.** Activity Log, DEFCON Tasks, Deals, Contacts, Projects.
 - **Activity Log doubles as the "what I've done" ledger.** Before processing a transcript or thread, query Activity Log for an existing entry referencing the same source ID. If found, skip. If not, process. No separate state cursor needed.
@@ -65,14 +63,14 @@ Reality (Gmail / Calendar / Fireflies / iMessage) → Notion → repo memory fil
 | Summary | 2-3 line digest, never raw transcript |
 | Action Items | bulleted, owner per item |
 | Raw Content | the actual draft body |
-| Instruction | Liam's plain-English directive for triage to draft from |
-| Send At | datetime; send-worker holds until then |
+| Instruction | Liam's plain-English directive (reserved field, no routine consumes it currently) |
+| Send At | datetime; reserved for future scheduled-send use |
 | Timestamp, Deal, Contact, Project | self-explanatory |
 
-**Status lifecycle**: Open Action → Send Now → Logged → 📦 Archive view.
-- Send Now = Channel=Text + Direction=Out only (iMessage send-worker route).
-- Email drafts go straight to Gmail Drafts. No Send Now needed.
+**Status lifecycle**: Open Action → Logged → 📦 Archive view.
+- Email drafts go straight to Gmail Drafts (review + click Send is the gate). Status=Open Action on the Activity Log row mirrors what's awaiting Liam's review.
 - Call/Meeting always lands as Logged.
+- Send Now is a Notion-defined value but no current routine produces or consumes it (was for the iMessage send-worker, which is not wired up).
 - Non-Desk-Monkey internal note (any thread/meeting where no attendee or sender matches a Notion Contact or Deal) = Channel=Note, Direction=Internal, Status=Logged, no Deal relation.
 
 **Dedupe pattern**: When logging a transcript, embed the Fireflies transcript URL or ID in Summary or Notes. Before writing, query Activity Log filtered to that source — if present, skip.
@@ -115,12 +113,10 @@ Two cadences: tactical loop (3x/day) and rollup (1x/day). Plus weekly audit. Plu
 
 | Routine | Where | Cadence | Job |
 |---|---|---|---|
-| `coworker` | Cloud | 3x weekdays (e.g. 7am, 12pm, 6pm) | Tactical 24h sweep. New Fireflies transcripts → Activity Log + DEFCON Tasks + draft. Unanswered Gmail >24h → log + draft. Calendar next-24h → meeting briefs + prep tasks. |
-| `daily-review` | Cloud | 1x daily evening (e.g. 6:30pm weekdays) | Rollup. Counterpart commitment verification (sweep DEFCON Tasks past Due, check for proof, create nudges). Deal property updates from today's Activity Log. Left-on-read prospecting (Deal contacts silent >7d). |
+| `coworker` | Cloud | 3x weekdays (e.g. 7am, 12pm, 6pm) | Tactical 24h sweep. New Fireflies transcripts → Activity Log + DEFCON Tasks + first-pass draft. Unanswered Gmail >24h → log + draft. Calendar next-24h → meeting briefs + prep tasks. Inbox noise classification (label + archive). |
+| `daily-review` | Cloud | 1x daily evening (e.g. 6:30pm weekdays) | Rollup. Prune today's first-pass meeting drafts (anti-AI-pacing). Counterpart commitment verification. Deal property updates from today's Activity Log. Left-on-read prospecting (Deal contacts silent >7d). |
 | `self-audit` | Cloud | Sundays 7pm | Scan last 200 lines runlog. Drift patterns. Stale Deal sweep (>14d Last Touch). |
 | `contact-migration` | Cloud | manual one-shot | Notion Contacts → Google Contacts via Zapier. Requires Google Contacts enabled in Zapier (currently NOT enabled). |
-| `triage` | Local Mac | hourly 8-18 | iMessage triage. Stdio MCP, can't run cloud. |
-| `send-worker` | Local Mac | every 15 min weekdays 8-18 | iMessage send via Notion Send Now queue. |
 
 Cron strings live in the Anthropic routine UI, not in this repo. Schedules above are documentation of intent.
 

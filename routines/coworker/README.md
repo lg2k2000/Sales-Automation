@@ -17,7 +17,7 @@ The tactical loop. Runs 3x weekdays. Past-24h sweep across Fireflies, Gmail, Cal
 - Deal property updates rolled up across multiple activities → `daily-review`
 - Left-on-read prospecting (>5d silence) → `daily-review`
 - Stale Deal sweep → `self-audit` (weekly)
-- iMessage triage and send → local Mac tasks
+- iMessage triage and send → deferred (local Mac stdio MCPs not currently wired)
 
 ## Idempotency
 Every step queries the Activity Log first to check whether the source (Fireflies transcript, Gmail thread, Calendar event) has already been processed. Re-running the routine is safe.

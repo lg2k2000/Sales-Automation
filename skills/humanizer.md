@@ -25,7 +25,7 @@ Liam Glennie
 deskmonkeyai.com
 ```
 
-iMessage drafts do NOT use this block. Texts are first-name or no-sign-off.
+Email drafts always end with this signature block. No exceptions.
 
 ## Style notes
 

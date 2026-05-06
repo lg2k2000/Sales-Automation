@@ -4,7 +4,7 @@
 
 ## Hard NEVERs
 
-- NEVER auto-send anything externally. Drafts only. Email = Gmail Drafts. iMessage = Notion Send Now flag + send-worker.
+- NEVER auto-send anything externally. Drafts only. Email = Gmail Drafts. Liam clicks Send.
 - NEVER advance Deal Stage without explicit verbal commitment from the buyer in a transcript.
 - NEVER touch Forecast Category. Liam's call.
 - NEVER overwrite Deal Evolution. Always append, newest at top.
@@ -17,7 +17,7 @@
 ## Status lifecycle (Activity Log)
 
 - **Open Action** → entry awaiting Liam's review or send.
-- **Send Now** → marked for the local send-worker to deliver. ONLY for Channel=Text + Direction=Out. Email drafts go in Gmail Drafts (no Send Now needed).
+- **Send Now** → reserved Notion status value (no current routine writes or reads it). Was the iMessage send-worker queue marker; that flow is not currently wired.
 - **Logged** → completed. Calls and Meetings always land here. Non-Desk-Monkey internal notes always land here with Direction=Internal and no Deal relation.
 - **Needs Routing** → routine couldn't resolve to a Deal/Contact. Surface for Liam to manually attach.
 - **📦 Archive view** → final resting state.
@@ -47,11 +47,10 @@
 
 ## Scope (what's in vs out)
 
-- **coworker** = Fireflies + Gmail + Calendar sweep, Activity Log + DEFCON Tasks + Deal updates. NOT iMessage. NOT Slack. NOT outbound Apollo sequences (yet).
-- **contact-migration** = one-shot Notion → Google Contacts. NOT a recurring sync.
+- **coworker** = Fireflies + Gmail + Calendar sweep, Activity Log + DEFCON Tasks + Deal updates + first-pass meeting drafts + inbox noise classification. NOT iMessage. NOT Slack. NOT outbound Apollo sequences (yet).
+- **daily-review** = evening rollup. Prunes today's first-pass meeting drafts. Verifies counterpart commitments. Rolls Deal property updates across today's activity. Left-on-read prospecting.
 - **self-audit** = bounded read of last 200 lines of runlog + stale-deal sweep. Never reads the whole runlog.
-- **triage** (local) = iMessage only. Drafts based on Activity Log Instruction field.
-- **send-worker** (local) = iMessage send only via Notion Send Now queue.
+- **contact-migration** = one-shot Notion → Google Contacts. NOT a recurring sync.
 
 ## Common drift to watch for
 

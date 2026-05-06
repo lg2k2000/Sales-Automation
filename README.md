@@ -1,6 +1,6 @@
 # Desk Monkey Routines
 
-Sales-automation orchestration for Liam Glennie. Cloud routines (Anthropic Claude Code on the web) handle Fireflies + Gmail + Calendar + Notion sweeps. Local Mac tasks handle iMessage. Notion is canonical state and dedupe ledger. The repo is the operational scratchpad.
+Sales-automation orchestration for Liam Glennie. Cloud routines (Anthropic Claude Code on the web) handle Fireflies + Gmail + Calendar + Notion sweeps. Notion is canonical state and dedupe ledger. The repo is the operational scratchpad.
 
 See `architecture.md` for the data flow diagram and `CLAUDE.md` for working memory loaded into every session.
 
@@ -10,10 +10,9 @@ See `architecture.md` for the data flow diagram and `CLAUDE.md` for working memo
 .
 ├── CLAUDE.md             auto-loaded into every session
 ├── architecture.md       data flow + tool layer
-├── .mcp.json             local Claude Code MCP config (Notion only)
-├── skills/               parse-call + humanizer + gotchas
+├── decisions.md          design-decisions log
+├── skills/               parse-call + inbox + humanizer + gotchas
 ├── routines/             cloud routines (coworker, daily-review, self-audit, contact-migration)
-├── local-tasks/          Mac-bound (triage, send-worker)
 └── memory/               runlog.md + audit.md (cursors live in Activity Log, not here)
 ```
 
@@ -25,13 +24,6 @@ See `architecture.md` for the data flow diagram and `CLAUDE.md` for working memo
 | `daily-review` | 1x weekday evening | Rollup. Counterpart commitment verification. Deal property updates from today's accumulated Activity Log. Left-on-read prospecting. |
 | `self-audit` | weekly Sundays 7pm | Drift patterns + stale Deal sweep. |
 | `contact-migration` | manual one-shot | Notion Contacts → Google Contacts via Zapier. Requires Google Contacts enabled in Zapier MCP. |
-
-## Local tasks (Mac-only)
-
-| Name | Cadence | Why local |
-|---|---|---|
-| `triage` | hourly 8-18 | iMessage MCP is stdio-only |
-| `send-worker` | every 15 min weekdays 8-18 | iMessage send is stdio-only |
 
 ## Skills
 
@@ -52,14 +44,13 @@ See `architecture.md` for the data flow diagram and `CLAUDE.md` for working memo
    - `daily-review` → schedule `30 18 * * 1-5` → repo=this one → prompt: `Read routines/daily-review/prompt.md and follow it exactly. Read CLAUDE.md and skills/* first for context.`
    - `self-audit` → schedule `0 19 * * 0` → repo=this one → prompt: `Read routines/self-audit/prompt.md and follow it exactly. Read CLAUDE.md and skills/* first for context.`
    - `contact-migration` → no schedule (manual trigger) → prompt: `Read routines/contact-migration/prompt.md and follow it exactly. Read CLAUDE.md and skills/* first for context.`
-5. Migrate local tasks: paste your existing triage and send-worker SKILL.md content into `local-tasks/*/SKILL.md` (placeholders are in place with the repo-sync wrapper at the top).
-6. First run: trigger `contact-migration` manually after Google Contacts is enabled in Zapier.
+5. First run: trigger `contact-migration` manually after Google Contacts is enabled in Zapier.
 
 ## Operating notes
 
 - **Voice**: Hunter S. Thompson honesty meets Hemingway brevity. No em dashes. No AI vocab. See `skills/humanizer.md`.
-- **Source of truth**: Reality (iMessage / Gmail / Calendar / Fireflies) → Notion → repo memory files.
-- **Never auto-send externally**: drafts only. Email goes in Gmail Drafts. iMessage waits on the Notion Send Now flag.
+- **Source of truth**: Reality (Gmail / Calendar / Fireflies) → Notion → repo memory files.
+- **Never auto-send externally**: drafts only. Email goes to Gmail Drafts and Liam clicks Send.
 - **Cron lives in the routine UI**: this repo doesn't execute schedules. The routine UI is canonical.
 - **Notion is the database**: no Postgres, no state.json. Activity Log + DEFCON Tasks + Deals + Contacts + Projects handle everything.
 - **Activity Log doubles as dedupe**: before processing a transcript or thread, query Activity Log for any row referencing the same source ID. If present, skip. Single source of truth for both data and idempotency.

@@ -17,7 +17,7 @@ Read only the last 200 lines of `memory/runlog.md`. Do NOT read the whole file.
 
 ## Step 2 — Group + count by routine
 
-For each routine (coworker / daily-review / contact-migration / triage / send-worker):
+For each routine (coworker / daily-review / contact-migration):
 - Total runs in the window
 - Counts of ✅ Healthy / ⚠️ Drift / 🔴 Failed
 - Distinct error types (deduped by message)
