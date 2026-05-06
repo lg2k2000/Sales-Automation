@@ -21,6 +21,20 @@ Track per-transcript outcome: processed / skipped (non-Desk-Monkey) / skipped (a
 
 ## Step 2 — Gmail unanswered sweep
 
+### Step 2a — Auto-classify and archive system noise
+
+Before processing for Deal threads, sweep for system noise patterns. This replaces the missing Gmail filter creation API (Zapier doesn't expose it; routine logic does it instead, with a worst-case 4h delay between this run and the next).
+
+`mcp__Gmail__search_threads` query: `in:inbox newer_than:1d`. For each thread, classify by sender:
+
+- **Newsletters**: subject or body contains `unsubscribe`, OR sender domain matches known newsletter list (substack, mailchimp, sendgrid, etc.) → Zapier `Add Label to Email` with label `System/Newsletters` + Zapier `Archive Email`.
+- **Receipts**: sender matches billing pattern (stripe, billing@, invoice@, receipt@, no-reply+billing, anthropic billing, notion billing, apollo billing, google payments) → label `System/Receipts` + archive.
+- **Notifications**: `from:notifications@github.com`, `from:calendar-notification@google.com`, app alerts (no-reply, donotreply patterns) → label `System/Notifications` + archive.
+
+Skip if thread is already labeled with one of the System/* labels. No double-labeling.
+
+### Step 2b — Unanswered Deal threads
+
 `mcp__Gmail__search_threads` query: `in:inbox newer_than:7d -from:me`.
 
 For each thread:

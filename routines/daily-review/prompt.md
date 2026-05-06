@@ -37,7 +37,34 @@ For each:
    - Notes: `originally due <date>, no proof of completion. Original DEFCON Task: <link>.`
    - Mark the original Task Status=Blocked, append Notes line `<ISO> verification failed; Liam-owned nudge created`.
 
-## Step 2 — Deal property updates rolled up from today
+## Step 2 — Prune today's first-pass meeting drafts (anti-AI-pacing)
+
+Query Activity Log for rows where:
+- Channel = Meeting
+- Timestamp is today (00:00 local onwards)
+- Action Items contains `[first-pass draft pending prune]`
+
+For each match:
+
+1. Find the Gmail draft `coworker` created. Look it up via `mcp__Gmail__list_drafts` filtered to today + matching subject (`Re: <meeting title>`) + matching recipient.
+2. Read the existing draft body. Apply the prune target: rewrite to 30-50% of the original length. The pruned version keeps:
+   - **One** line recap of what got agreed (not three)
+   - **One** action item — the single most important one. Their action if it's the gating step. Liam's action if Liam owes the next move.
+   - **One** sentence next-step ask or close
+   - The signature block (always)
+3. Drop:
+   - Full bulleted action item lists (collapse to the one that matters)
+   - Pleasantries beyond the bare minimum
+   - Restating context the recipient already remembers
+   - Anything that sounds like an AI summary
+4. Replace the Gmail draft: delete the old draft via Zapier `Delete Email` (use the message_id from `list_drafts`), create the new draft via `mcp__Gmail__create_draft` with the same `to`, `subject`, and `replyToMessageId` if applicable.
+5. Update the Activity Log Meeting row: replace `[first-pass draft pending prune]` in Action Items with `[draft pruned <ISO>]`.
+
+Apply `skills/humanizer.md` voice rules. Read the pruned version aloud. If it doesn't sound like a peer texting a peer (with a signature), prune more.
+
+**Why this exists:** A draft sent 30 seconds after a meeting reads as AI. A tightened draft the recipient sees the next morning reads as a person who took time to think. The wait between first-pass (within hours of meeting) and pruned-pass (this evening) builds in that human pacing.
+
+## Step 3 — Deal property updates rolled up from today
 
 Query Activity Log for rows where Timestamp >= today (00:00 local) AND Status=Logged AND Channel IN [Meeting, Call, Email] AND a Deal relation exists.
 
@@ -62,7 +89,7 @@ Group by Deal. For each Deal with new activity today:
 
 If the day's activity surfaced a Stage gate met (3+ Champion Tests Passed → ready for Qualified, or Buyer-Owned Action Ratio ≥ 50% → ready for Co-Building exit), DO NOT auto-advance Stage. Create a DEFCON Task for Liam: Task=`<Deal>: ready for <new stage> — <evidence>`, Owner=Liam, DEFCON=2, Category=Internal, Source=Internal, Notes summarizing the gate evidence.
 
-## Step 3 — Left-on-read prospecting sweep
+## Step 4 — Left-on-read prospecting sweep
 
 Find Deals where:
 - Stage IN [New, Discovery, Qualified, POC] (active early-stage)
@@ -79,14 +106,15 @@ For each, before creating a nudge: check DEFCON Tasks for an existing Open `soft
 - Notes: `last sent <date>, no reply. Gmail thread: <permalink>. Stage=<current Deal stage>.`
 - Deal, Contact: relations set
 
-## Step 4 — Final runlog + commit
+## Step 5 — Final runlog + commit
 
 Replace `[IN_PROGRESS]` with:
 
 ```
 ## <ISO> — desk-monkey-daily-review
-**Expected:** counterpart verification + Deal updates from today + prospecting sweep
+**Expected:** prune today's first-pass drafts + counterpart verification + Deal updates from today + prospecting sweep
 **Actual:**
+- Drafts pruned: <P> meeting drafts rewritten tighter
 - Verification: <N> tasks checked, <V> verified done, <B> blocked + nudge created
 - Deal updates: <D> deals touched, <U> property updates, <G> stage gates flagged
 - Prospecting: <S> deals scanned, <N> nudge tasks created

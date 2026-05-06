@@ -129,6 +129,8 @@ Skip if the transcript is internal-only or unresolved (no Deal).
 
   The signature block is mandatory. First-name-only sign-offs are not acceptable on email drafts. See `skills/humanizer.md` for the full signature spec.
 
+This is the **first-pass draft**. After creating it, append `[first-pass draft pending prune]` to the Activity Log Meeting row's Action Items field. The `daily-review` routine will revisit later that day and rewrite the draft tighter (cut to 30-50% of length, focus on the single most important next-step ask). The wait between first-pass (within hours of meeting) and pruned-pass (evening) builds in human pacing — a draft sent 30 seconds after a meeting reads as AI; a tightened draft sent the next morning reads as a person.
+
   Examples:
 
   > Good draft: `Recap of today: you're sold on the approach, blocker is getting Janet's approval before procurement. Action items: me — send the one-pager Janet can forward by Tuesday. You — pull Janet into the next call. Next thing: scheduling that call once you have her on board.`

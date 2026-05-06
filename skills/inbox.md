@@ -56,17 +56,21 @@ If no Contact match: leave un-labeled. It's general inbox noise.
 | Receipt / newsletter / notification | Auto-filtered, skips inbox |
 | Sat in `_Waiting` >5 days | `daily-review` creates a soft-nudge DEFCON Task. Email stays in `_Waiting`. |
 
-## Filters to set up manually in Gmail UI
+## Filters — routine-based, not Gmail-UI-based
 
-The Gmail API doesn't expose filter creation. These are one-time manual setup at Settings → Filters and Blocked Addresses → Create new filter:
+**Important:** Gmail filter creation is not exposed by Zapier MCP or the direct Gmail MCP. Liam doesn't manually set up filters. Instead, `coworker` Step 2a does noise-classification on every run (3x/day): sweeps the inbox, labels + archives system noise (newsletters, receipts, notifications) automatically.
 
-1. **Calendar invitation auto-replies** — match `from:calendar-notification@google.com` → Skip Inbox + apply `System/Notifications`
-2. **GitHub notifications** — match `from:notifications@github.com` → Skip Inbox + apply `System/Notifications`
-3. **Newsletters** — match each newsletter sender or use `unsubscribe` keyword in body → Skip Inbox + apply `System/Newsletters`
-4. **Receipts** — match billing senders (Stripe, Apollo, Notion, Anthropic billing, Google billing) → Skip Inbox + apply `System/Receipts`
-5. **Vendor support replies** — vendor support emails → apply `Vendor`, leave in inbox
+**Trade-off:** worst-case 4-hour delay between when a notification lands and when it gets auto-labeled + archived. Compared to in-product filters (which fire instantly), this means notifications might briefly clutter inbox until the next coworker pass. Acceptable trade-off given the alternative is manual filter setup.
 
-The relationship-type labels (Customer, Prospect, Partner) are NOT applied via filter. `coworker` does that automatically based on Notion Contact lookup. Filters only handle the System/* noise categories.
+The noise-classification rules in coworker should match these patterns:
+
+| Pattern | Action |
+|---|---|
+| Subject/body contains `unsubscribe` OR sender on known newsletter list (substack, mailchimp, sendgrid) | label `System/Newsletters` + archive |
+| Billing senders (stripe, billing@, invoice@, anthropic/notion/apollo/google billing) | label `System/Receipts` + archive |
+| `notifications@github.com`, `calendar-notification@google.com`, no-reply / donotreply patterns | label `System/Notifications` + archive |
+
+The relationship-type labels (Customer, Prospect, Partner, Vendor) are NOT applied via routine noise-classification. `coworker` Step 2b applies those based on Notion Contact lookup when processing Deal-related threads.
 
 ## Daily Liam flow
 
