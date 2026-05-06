@@ -4,7 +4,13 @@ Tactical loop. Runs 2x weekdays. Looks at the past 24-36 hours. Three sweeps: Fi
 
 Daily-rollup work (counterpart verification, Deal property rollups across multiple activities, prospecting, draft pruning) lives in `daily-review`, not here. This routine stays narrow and fast.
 
-## Step 0 — Stub runlog
+## Step 0a — Read the Attio tool contract
+
+Read `skills/attio-tooling.md`. Run the Attio runtime preflight before any CRM action. Append the `TOOL_CONTRACT` line to `memory/runlog.md`. If a required Attio capability for this routine is unavailable (search/list/create record, create-note, list-tasks, create-task, update-record, list-attribute-definitions), log `BLOCKED_TOOL_GAP` and continue with safe Gmail / Calendar / Fireflies reads. Do not attempt CRM writes for capabilities that are missing.
+
+Do NOT use browser automation for Attio. Do NOT use hardcoded MCP function names — use the connector tools the runtime actually exposes.
+
+## Step 0b — Stub runlog
 
 Append to `memory/runlog.md`:
 ```
@@ -40,10 +46,10 @@ Skip if thread is already labeled with one of the System/* labels. No double-lab
 For each thread:
 1. `mcp__Gmail__get_thread` and find the last message sender.
 2. Skip if last sender is Liam (waiting on them) or doesn't match a Person Record in Attio.
-3. Match sender email to a Person Record (`mcp__Attio__find_record` people, by email_address). Get the linked active Deal Record. Skip if no Deal match (general inbox noise is not your job).
-4. **Dedupe via Attio Notes**: `mcp__Attio__list_notes` for the Deal Record. If any Note title starts with `EMAIL-<gmail_thread_id>`, skip (already logged + drafted).
+3. Match sender email to a Person Record using the Attio search/list records capability (object=`people`, filter by email_address). Get the linked active Deal Record. If a Person matches but no active Deal exists, evaluate strong-buying-signal per `skills/attio-tooling.md` Deal creation protocol — only create a Deal when confidence ≥ 0.80; otherwise create a `[DEFCON 3] [Pipeline Build] [Liam] Review whether to create Deal for <Company>` Task. Skip the email-draft step if no Deal exists yet.
+4. **Dedupe via Attio Notes**: use the Attio list-notes capability for the Deal Record. If any Note title starts with `EMAIL-<gmail_thread_id>`, skip (already logged + drafted).
 5. If thread last activity was >24h ago AND Deal Stage NOT IN [Closed Won, Closed Lost, On Hold]:
-   - Create Attio Note attached to Deal + Person:
+   - Create Attio Note attached to Deal + Person via the Attio create-note capability:
      - Title: `EMAIL-<gmail_thread_id> — <thread subject>`
      - Body: `[Channel: Email] [Direction: In] [Status: Open Action] [Source: <gmail_permalink>] [Last reply: <date> by <sender>]` plus Summary (1-2 line gist of the last message) plus Action Items.
    - Create draft response with `mcp__Gmail__create_draft` (set `thread_id` so it threads). Apply humanizer voice. Address what they asked, propose the next step.
@@ -61,15 +67,15 @@ Note: counterpart-silence-over-5-days nudge logic lives in `daily-review`, not h
 
 For each event:
 1. Skip if all attendees internal (no external attendee email matching a Person Record).
-2. Match external attendees to Person Records → Deal. If matched:
-   - **Dedupe via Attio Notes**: `mcp__Attio__list_notes` for the Deal. If any Note title starts with `BRIEF-<calendar_event_id>` AND is from today, skip (brief already written today).
-   - Create Attio Note attached to Deal: title `BRIEF-<calendar_event_id> — <meeting title>`. Body includes last touchpoint date+channel, Open Questions (from Deal attribute), Identified Pain (from Deal attribute), Next Action (from Deal attribute), last 3 Notes attached to this Deal.
-3. **Create Attio Task** with content `[DEFCON <2|3>] [Meeting Prep] [Liam] prep for <meeting title>`:
+2. Match external attendees to Person Records → Deal via the Attio search/list records capability. If matched:
+   - **Dedupe via Attio Notes**: use the Attio list-notes capability for the Deal. If any Note title starts with `BRIEF-<calendar_event_id>` AND is from today, skip (brief already written today).
+   - Create Attio Note attached to Deal via the Attio create-note capability: title `BRIEF-<calendar_event_id> — <meeting title>`. Body includes last touchpoint date+channel, Open Questions (from Deal attribute), Identified Pain (from Deal attribute), Next Action (from Deal attribute), last 3 Notes attached to this Deal.
+3. **Create Attio Task** with content `[DEFCON <2|3>] [Meeting Prep] [Liam] prep for <meeting title>` via the Attio create-task capability:
    - DEFCON 2 if same-day, 3 if tomorrow
    - deadline_at = meeting start time
    - assignees = [liam@deskmonkeyai.com]
    - linked_records = [Deal Record, Person Record]
-   - Skip if a Task with this title prefix already exists Open for this Deal.
+   - Skip if a Task with this title prefix already exists Open for this Deal (use the Attio list-tasks capability to check first).
 
 ## Step 4 — Final runlog + commit
 
@@ -92,11 +98,15 @@ Then: `git add memory/runlog.md && git commit -m "coworker run <ISO>" && git pus
 
 ## Hard NEVERs
 
-- NEVER auto-send. Drafts only.
+- NEVER auto-send email. Drafts only.
+- NEVER create a Calendar event with attendees autonomously. Surface a Task instead.
 - NEVER skip the Attio Note dedupe query. Idempotency is the whole reason it works to run 2x/day.
 - NEVER advance Deal Stage from coworker. That's daily-review's call (and only on hard evidence).
 - NEVER touch Forecast Category.
 - NEVER process the same transcript or thread twice.
 - NEVER write to Notion CRM DBs (Contacts/Deals/Activity Log/DEFCON Tasks). Those are legacy. Attio is canonical now. Notion only for Projects + knowledge.
+- NEVER hardcode Attio MCP function names in this prompt. Use the capability names from `skills/attio-tooling.md`. The runtime decides the actual tool.
+- NEVER create a Deal below 0.80 confidence. Create a Liam-owned review Task instead.
+- NEVER use browser automation for Attio writes.
 - ALWAYS write the runlog before exit.
 - ALWAYS commit + push `memory/runlog.md` at end.

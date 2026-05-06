@@ -16,6 +16,19 @@ Canonical hard rules + status lifecycles + dedupe + scope. Loaded by every routi
 - NEVER write to Notion CRM DBs (Contacts/Deals/Activity Log/DEFCON Tasks) from a routine. Those are legacy, archived after migration. Attio is canonical now.
 - NEVER overwrite a populated Attio attribute with empty data on the migration. Only fill blanks.
 
+## Attio tool-contract NEVERs
+
+- NEVER hardcode Attio runtime tool names like `mcp__Attio__create_record`, `mcp__Attio__find_record`, or `mcp__Attio__update_record_attributes` in prompts. The Cloud Routine runtime decides which connector tool fulfills a capability. Use capability language (search records, list records, create record, upsert record, update record, list-attribute-definitions, create-note, list-tasks, create-task, update-task, list-lists, add-record-to-list).
+- NEVER use fake Attio tools from old examples. `assert_record`, `update_record_attributes`, `find_record`, `find_list_entry`, `create_list_entry` are not tools the hosted MCP exposes. Do not write prompts that depend on them.
+- NEVER use `assert_record` unless the live connector actually exposes that exact tool (it does not, at time of writing).
+- NEVER call a Deal write before calling `list-attribute-definitions` for object `deals`. The workspace has custom fields and select options the routine cannot guess.
+- NEVER call a list-entry write before calling `list-list-attribute-definitions` for the target list.
+- ALWAYS prefer `upsert-record` when present. Otherwise: search-records → create-record / update-record. The upsert path is preferred because it's atomic and idempotent.
+- NEVER auto-create a Deal below 0.80 confidence. Create a Liam-owned `[Pipeline Build]` review Task instead. Routines run unattended without approval prompts; the confidence gate is the only safeguard against pipeline pollution.
+- NEVER skip the Attio runtime preflight in a routine that touches Attio. The `TOOL_CONTRACT` line in `memory/runlog.md` is the audit trail.
+- If direct Attio MCP lacks a needed capability, use Zapier fallback ONLY for the actions allowed in `skills/attio-tooling.md`, AND only after logging `BLOCKED_TOOL_GAP`.
+- BROWSER AUTOMATION IS FORBIDDEN for Attio CRM writes. Fragile, unsafe in unattended cloud routines, hard to dedupe.
+
 ## Attio Note title conventions
 
 Every Note attached to a Deal Record has a title-prefix for dedupe + browseability:
@@ -59,8 +72,8 @@ Status semantics in title (when state is needed beyond is_completed):
 
 ## Dedupe rules
 
-- **Attio Notes**: title-prefix source ID. Always query `mcp__Attio__list_notes` for the parent Deal Record before creating; if title prefix matches, skip.
-- **Attio Tasks**: title-prefix Deal + Category + Owner + action keywords. Query `mcp__Attio__list_tasks` for this Deal; if a similar Open task exists, append to that Task's content rather than creating a duplicate.
+- **Attio Notes**: title-prefix source ID. Always use the Attio list-notes capability for the parent Deal Record before creating; if title prefix matches, skip.
+- **Attio Tasks**: title-prefix Deal + Category + Owner + action keywords. Use the Attio list-tasks capability for this Deal; if a similar Open task exists, append to that Task's content via update-task rather than creating a duplicate.
 - **Audit**: never re-audit a week already in audit.md. Check headers first.
 - **Migration**: never run twice. Attio Migration Tracker Note marker gates this.
 
@@ -87,7 +100,7 @@ Status semantics in title (when state is needed beyond is_completed):
 If a thread, transcript, or calendar event doesn't involve a Person Record or Deal Record in Attio, it's not Desk Monkey work. Don't try to route it.
 
 A meeting/email/transcript counts as Desk Monkey work if at least one external attendee or sender matches:
-- A Person Record in Attio (find_record by email_addresses)
+- A Person Record in Attio (resolved via the Attio search-records capability filtered by email_addresses)
 - Linked to an active Deal Record (Stage NOT IN [Closed Won, Closed Lost, Nurture, On Hold, Unresponsive])
 
 If neither matches: skip entirely if low-signal, or attach a Note to a designated "Misc / Internal" Person Record if there's something worth keeping.

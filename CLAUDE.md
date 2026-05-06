@@ -22,9 +22,18 @@ deskmonkeyai.com
 
 Direct MCPs primary. Zapier fills gaps. Use direct for read AND write whenever it exists.
 
-| Surface | Direct MCP for | Zapier for |
+**Attio rules (read `skills/attio-tooling.md` before any Attio call):**
+
+- Direct Attio hosted MCP is primary. URL: `https://mcp.attio.com/mcp`. OAuth.
+- Zapier MCP is fallback only for missing Attio actions.
+- This repo does NOT hardcode exact runtime function names. Routines describe capabilities and discover the actual connector tools at runtime.
+- Every Attio-using routine reads `skills/attio-tooling.md` and runs the runtime preflight before any CRM read or write.
+- Use capability names in prose, not fake tool names. Forbidden: `assert_record`, `find_record`, `update_record_attributes`, `create_list_entry`, `find_list_entry`, `mcp__Attio__*` literal names.
+- **Routines run in the cloud without approval prompts.** Tool calls fire unattended. CRM writes need strict confidence gates (especially Deal creation — see `skills/attio-tooling.md` Deal creation protocol). When in doubt, write a Liam-owned Task instead of a Deal/record.
+
+| Surface | Direct MCP capabilities | Zapier (fallback only) |
 |---|---|---|
-| **Attio** (CRM canonical) | `find_record`, `list_records`, `create_record`, `update_record`, `assert_record`, `list_notes`, `create_note`, `list_tasks`, `create_task`, `update_task`, `find_list_entry`, `create_list_entry` | nothing (direct MCP covers it) |
+| **Attio** (CRM canonical) | search records, list records, get records by ids, create record, upsert record, update record, list attribute definitions, create note, list tasks, create task, update task, list lists, list list attributes, add record to list. **Use after runtime preflight from `skills/attio-tooling.md`.** | Create or Update Record / Create Note / Create Task / Create or Update List Entry — only if direct Attio is missing the action |
 | Notion (projects + knowledge ONLY) | full CRUD on project/knowledge pages | nothing |
 | Calendar | list/create/update/delete events, suggest_time, respond_to_event (invites send via attendees) | nothing |
 | Drive | search, read, create, copy, metadata | Share / Delete |
@@ -39,7 +48,7 @@ Reality (Gmail / Calendar / Fireflies) → **Attio** (CRM canonical) → Notion 
 
 - **Attio** = canonical for everything customer-facing. People, Companies, Deals, Activities (as Notes), Tasks, Lists.
 - **Notion** = canonical for everything that doesn't anchor to a person/company/deal: Projects (post-Closed-Won implementation work), SOPs, Selling With methodology docs, ideas, internal runbooks.
-- **Attio Notes double as the "what I've done" ledger.** Before processing a transcript or thread, query Notes attached to the matching Deal Record for one referencing the same source ID (Fireflies URL, Gmail thread ID, Calendar event ID). If found, skip. If not, process.
+- **Attio Notes double as the "what I've done" ledger.** Before processing a transcript or thread, list notes on the matching Deal Record for one referencing the same source ID (Fireflies URL, Gmail thread ID, Calendar event ID). If found, skip. If not, process. Use the Attio list-notes capability via the connector's actual tool surface.
 - **Repo memory** = `runlog.md` (append-only run history) + `audit.md` (weekly findings). Nothing else.
 - **No Postgres. No state.json. No Skill State DB usage from routines.** Attio Notes are enough for dedupe.
 
@@ -114,7 +123,7 @@ Every Note attached to a Deal Record follows this format so the dedupe query can
 <draft body or important quote>
 ```
 
-**Dedupe rule:** Before creating a Note, `list_notes` for the parent Deal Record. If any existing Note title starts with the same source-ID prefix (e.g., `MTG-<fireflies_id>`), skip.
+**Dedupe rule:** Before creating a Note, list notes on the parent Deal Record. If any existing Note title starts with the same source-ID prefix (e.g., `MTG-<fireflies_id>`), skip.
 
 ## Attio Task conventions
 
@@ -176,6 +185,7 @@ Cron strings live in the Anthropic routine UI, not in this repo. Schedules above
 
 ## Skills (reusable logic the routines call)
 
+- `skills/attio-tooling.md` — canonical Attio tool contract + runtime preflight + Deal creation/update protocols + Zapier fallback rules. **Read first by any routine touching Attio.**
 - `skills/parse-call.md` — Fireflies transcript → Attio Note + Tasks + Deal updates + first-pass Gmail draft. Called by `coworker` for each new transcript.
 - `skills/inbox.md` — Gmail label scheme (timeless, role-based) + after-action playbook + relationship-type label mapping driven by Attio Deal Stage.
 - `skills/humanizer.md` — voice rules (29 AI patterns to scrub) + bad/good examples + signature spec.
