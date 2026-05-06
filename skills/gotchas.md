@@ -10,7 +10,7 @@
 - NEVER overwrite Deal Evolution. Always append, newest at top.
 - NEVER dump raw transcripts into Notion. Summaries only (2-3 lines).
 - NEVER tag a non-Desk-Monkey thread with a Deal. If no attendee or sender matches a Notion Contact or Deal, log Channel=Note Direction=Internal Status=Logged with no Deal relation, or skip entirely.
-- NEVER process the same Fireflies transcript twice. Skill State `last_fireflies_id` gates this.
+- NEVER process the same Fireflies transcript twice. Activity Log dedupe gates this: query Activity Log for an existing Meeting row referencing the transcript URL or ID before processing.
 - NEVER create duplicate DEFCON Tasks. Dedupe by Deal + Task title before creating.
 - NEVER overwrite a populated Google Contact field with empty data on contact-migration. Only fill blanks.
 
@@ -42,8 +42,8 @@
 
 - Activity Log: don't duplicate for the same Fireflies transcript or same Gmail thread (use thread_id and meeting_id).
 - DEFCON Tasks: dedupe by Deal relation + Task title before creating (use search/query).
-- Skill State: upsert (create if missing, update if exists) — never create duplicate Key+Skill rows.
-- Audit: never re-audit a week already in audit.md or covered by Skill State `last_audit_week`.
+- Activity Log: embed source ID (Fireflies URL, Gmail thread ID, Calendar event ID) in Summary or Notes. Query before writing. If a row already references that source, skip.
+- Audit: never re-audit a week already in audit.md. Check headers first.
 
 ## Scope (what's in vs out)
 
@@ -57,7 +57,7 @@
 - Drafting in customer-service voice (em dashes, AI vocab, "circling back"). Read aloud test.
 - Updating Stage on weak signals like "send me an email about it".
 - Creating duplicate Activity Log entries for the same Fireflies transcript or Gmail thread.
-- Forgetting to update Skill State after a successful run (next run reprocesses everything).
+- Forgetting to embed source ID in Activity Log row Summary/Notes (next run reprocesses everything because dedupe query can't match).
 - Letting `[IN_PROGRESS]` runlog stubs stay [IN_PROGRESS] because the routine errored mid-run. Wrap work in try/recover, write 🔴 Failed report on exception.
 - DEFCON Tasks created with Owner=blank but no Notes explaining what counterpart owes (verification sweep can't act).
 

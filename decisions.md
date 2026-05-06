@@ -52,10 +52,11 @@ Captures architectural decisions made during the build of Desk Monkey. Each entr
 - **Why:** A draft sent 30 seconds after a meeting reads as AI. A tightened draft the next morning reads as a person.
 - **Marker:** `[first-pass draft pending prune]` in Activity Log Action Items, replaced with `[draft pruned <ISO>]` after prune pass.
 
-### Voice: polite AND concise, not either/or
-- **Decided:** Hunter S. Thompson honesty + Hemingway brevity, BUT polite. No commanding language at the recipient. No "Pick one. Cut Y. Pull Z." even if short.
-- **Why:** Brevity without politeness reads as bossy. Liam's actual voice is direct + polite, not direct + aggressive.
-- **Reframings:** "Could you...", "Would you mind...", "Happy to talk through it."
+### Voice: polite AND not AI-polished, both at once
+- **Decided:** Hunter S. Thompson honesty + Hemingway brevity, AND polite, AND scrubbed of all AI-writing tells. Not either/or, not three-of-four. All four.
+- **Why:** Brevity without politeness reads as bossy. Politeness without authenticity reads as a customer-service bot. The 29 AI-writing patterns from Wikipedia (em dashes, rule-of-three, AI vocab, signposting, hedging, etc.) all get scrubbed. See `skills/humanizer.md` for the full pattern list with bad/good examples.
+- **The bar:** sounds like a peer texting a peer. Reads aloud naturally. Has soul (specific feelings, opinions, varied rhythm). No customer-service mush, no inflated significance, no buzzword soup.
+- **Reframings of commanding language:** "Could you...", "Would you mind...", "Happy to talk through it."
 
 ### Email signature mandatory
 - **Decided:** Every email draft ends with the full Liam Glennie / phone / website signature block. First-name-only sign-offs not acceptable.
@@ -94,3 +95,14 @@ Captures architectural decisions made during the build of Desk Monkey. Each entr
 ### Cloud routines fresh-clone each run
 - **Decided:** Each routine run does fresh `git clone`, work, `git add memory/`, `git commit`, `git push origin main`.
 - **Why:** No long-lived state on cloud side. Repo is the operational scratchpad.
+
+### Coworker drops from 3x/day to 2x/day (Pro tier budget)
+- **Decided:** `coworker` runs 2x weekdays (8am + 4pm), not 3x. Schedule total: 2 coworker + 1 daily-review = 3 routine runs/weekday + 1 self-audit/Sunday.
+- **Why:** Pro plan caps at 5 routine runs/day. Original schedule (3 + 1 = 4 weekday) left only 1 ad-hoc slot, which is too tight for testing + manual triggers. 2 + 1 = 3 leaves 2 ad-hoc slots.
+- **Trade-off:** worst-case latency from inbound (transcript / email) to first-pass draft is ~8 hours instead of ~4. Daily-review still prunes drafts the same evening, so total wait-and-prune cycle is unchanged.
+- **Upgrade path:** Max plan (15 runs/day) if routine count grows or the latency becomes a problem.
+
+### Activity Log is the dedupe ledger; no Skill State DB usage
+- **Decided:** Routines query the Notion Activity Log (embedding source IDs in Summary/Notes) to dedupe. The Notion Skill State DB exists but no routine reads or writes to it.
+- **Why:** Single source of truth for both data and idempotency. Avoids a second database and the contradictions between two state mechanisms.
+- **Operator action required:** archive the unused **Skill State** (`collection://7e0c32b3-112c-4bb0-b058-ee588e8ca921`) and **Skills Registry** (`collection://de9ac424-df07-4595-97f8-64c88dde13b7`) collections in Notion. Dead databases create confusion. Archive via Notion's right-click → Move to Archive.

@@ -113,12 +113,14 @@ Two cadences: tactical loop (3x/day) and rollup (1x/day). Plus weekly audit. Plu
 
 | Routine | Where | Cadence | Job |
 |---|---|---|---|
-| `coworker` | Cloud | 3x weekdays (e.g. 7am, 12pm, 6pm) | Tactical 24h sweep. New Fireflies transcripts → Activity Log + DEFCON Tasks + first-pass draft. Unanswered Gmail >24h → log + draft. Calendar next-24h → meeting briefs + prep tasks. Inbox noise classification (label + archive). |
+| `coworker` | Cloud | 2x weekdays (e.g. 8am, 4pm) | Tactical 24h sweep. New Fireflies transcripts → Activity Log + DEFCON Tasks + first-pass draft. Unanswered Gmail >24h → log + draft. Calendar next-24h → meeting briefs + prep tasks. Inbox noise classification (label + archive). |
 | `daily-review` | Cloud | 1x daily evening (e.g. 6:30pm weekdays) | Rollup. Prune today's first-pass meeting drafts (anti-AI-pacing). Counterpart commitment verification. Deal property updates from today's Activity Log. Left-on-read prospecting (Deal contacts silent >7d). |
 | `self-audit` | Cloud | Sundays 7pm | Scan last 200 lines runlog. Drift patterns. Stale Deal sweep (>14d Last Touch). |
 | `contact-migration` | Cloud | manual one-shot | Notion Contacts → Google Contacts via Zapier. Requires Google Contacts enabled in Zapier (currently NOT enabled). |
 
 Cron strings live in the Anthropic routine UI, not in this repo. Schedules above are documentation of intent.
+
+**Pro plan budget:** 5 routine runs/day. Current schedule uses 3 weekday runs (2 coworker + 1 daily-review) leaving 2 ad-hoc slots/day. Self-audit consumes 1 run on Sundays. If routine count grows, upgrade to Max (15/day) or compress further.
 
 ## Skills (reusable logic the routines call)
 

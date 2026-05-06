@@ -108,7 +108,7 @@ flowchart TB
 ## Brain: routines and what each does
 
 ### `coworker` — tactical 24h loop
-- **Cadence:** 3x weekdays (suggested 7am, 12pm, 6pm)
+- **Cadence:** 2x weekdays (suggested 8am, 4pm). Drops from 3x to 2x to fit Pro plan's 5 routine-runs/day cap (2 coworker + 1 daily-review = 3 weekday runs, leaving 2 ad-hoc slots).
 - **Where:** cloud
 - **Reads:** Fireflies (last 36h transcripts), Gmail (inbox last 7d), Calendar (next 24h), Notion (Activity Log dedupe)
 - **Writes:** Notion Activity Log, Notion DEFCON Tasks, Notion Deal property updates (high-confidence only), Gmail Drafts (via direct `create_draft` MCP), Gmail labels (via Zapier)
@@ -223,7 +223,7 @@ Cron strings live in the Anthropic routine UI, not in this repo. Listed here as 
 
 | Job | Where | Suggested cadence |
 |---|---|---|
-| coworker | Cloud | 3x weekdays (e.g. 7am, 12pm, 6pm) |
+| coworker | Cloud | 2x weekdays (e.g. 8am, 4pm) |
 | daily-review | Cloud | 1x weekday evening (e.g. 6:30pm) |
 | self-audit | Cloud | weekly Sundays 7pm |
 | contact-migration | Cloud | manual one-shot |
