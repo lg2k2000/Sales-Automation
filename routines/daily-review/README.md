@@ -1,5 +1,7 @@
 # daily-review
 
+> **⚠️ SUPERSEDED 2026-05-07** — replaced by `routines/assistant/`. Phases 3-4 of the new `assistant` routine cover triage + draft prep, and phase 6 covers reply execution that supplants the standalone evening rollup. This README kept for trace; do not schedule this routine.
+
 Once-daily evening rollup. Four jobs:
 
 1. **Prune today's first-pass meeting drafts** (anti-AI-pacing). Find Attio Notes from today with `[first-pass draft pending prune]` markers. Rewrite the linked Gmail draft to 30-50% length. Replace the draft. Update the Note marker to `[draft pruned <ISO>]`.

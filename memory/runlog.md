@@ -195,3 +195,55 @@ Routines append a `[IN_PROGRESS]` stub at start and replace it with the final re
 - Surfacing channel: Slack as primary push (native official Anthropic MCP), email digest as fallback. Common Room evaluated and skipped (community-engagement tool, not aligned with Desk Monkey buyers).
 - Memory architecture: per-deal context files (`memory/deals/<slug>.md`) populated by the consolidated routine.
 - Per-deal MAP doctrine: Notion `MAP Draft` field is the canonical mutual action plan. Routines write the cross-owner MAP there, not Attio Tasks.
+
+---
+
+## 2026-05-07 — architecture rewrite — `assistant` routine + Slack surfacing — ✅ Healthy
+
+**Trigger:** Liam's "secretary vision" conversation — collapse multi-routine architecture into one routine running 5x/day in fixed phase order, surface via Slack `#desk-monkey` with free-form text reply DSL.
+
+**Files written:**
+- `routines/assistant/README.md` — new
+- `routines/assistant/prompt.md` — new (replaces coworker + daily-review prompts)
+- `skills/digest.md` — new (Slack digest composition)
+- `skills/slack.md` — new (channel mechanics + reply DSL parsing)
+
+**Files updated:**
+- `CLAUDE.md` — date stamp added; tool routing table now lists Google Contacts WIRED (Zapier) and Slack added; counterpart-task rule rewritten; routines section collapsed to single `assistant` row + `self-audit` weekly + `contact-migration` one-shot; old `coworker` and `daily-review` flagged superseded; skills list expanded with `digest.md` + `slack.md`; Hard NEVERs updated for per-item Slack-authorized Gmail send and per-invite Calendar auth, plus "ALWAYS post the digest even when empty" rule.
+- `routines/coworker/README.md` — SUPERSEDED 2026-05-07 banner added
+- `routines/daily-review/README.md` — SUPERSEDED 2026-05-07 banner added
+
+**Architecture summary:**
+
+| Layer | Tool | Role |
+|---|---|---|
+| Reality | Fireflies / Gmail / Calendar / Apollo | events |
+| Canonical CRM | Attio | People / Companies / Deals / Notes / Tasks |
+| Canonical mutual action plan | Notion `📈 Deals` `MAP Draft` field | who owes what by when |
+| Surfacing | Slack `#desk-monkey` | digest in, free-form text out |
+| Memory | repo `memory/runlog.md` + skills/* + CLAUDE.md | durable across runs |
+
+**Phase order in `assistant`:**
+1. Sweep — Fireflies / Gmail / Calendar / Apollo / Slack replies since last_run_at
+2. Update — `parse-call` for transcripts; label + archive email; refresh MAP Drafts
+3. Triage — score deals against drift criteria; build surface-list ranked DEFCON
+4. Draft — Gmail drafts, Calendar invite proposals, Liam-owned nudge tasks
+5. Digest — post to Slack per `skills/digest.md`
+6. Execute replies — read Slack since last digest, parse free-form intent, send / send-invite / rewrite / skip / defer per `skills/slack.md`
+
+**Cadence:** 07:00, 11:00, 14:00, 17:00, 20:00 MT weekdays. 5 routine runs/day = full Pro plan budget.
+
+**Slack reply latency:** ~3hr worst case at 5x/day. Open issue documented in `routines/assistant/README.md`. Real-time options (Zapier sentinel writing trigger files, or Agent SDK migration) deferred until latency becomes painful.
+
+**Tactical follow-ups today (separate from architecture):**
+- Craig added to Google Contacts via Zapier (Walicek per LinkedIn/email evidence). Contact ID `people/c3934690368546719101_2026-05-07T08:02:23.747421Z`. Includes job title, company, work email, LinkedIn, Tampa address, source-of-relationship note.
+- All 4 saved Notion `📈 Deals` views live: 🔥 Hot This Week, ⏳ Stalled (oldest first), 🌳 By Source, 🤝 Resale / Referral Track.
+- Legacy `💰 Deals Pipeline` Notion DB renamed to `📦 ARCHIVED — Deals Pipeline`.
+- Sales Hub root section headers updated to flag legacy DBs as do-not-write.
+
+**Open architectural questions still on Liam's plate:**
+- Slack MCP: Liam to enable on his end. Once enabled, the new routine is unblocked.
+- Real-time Slack→routine triggering: defer until latency is painful.
+- Common Room: skipped (community-engagement tool, not aligned with current buyers).
+- Per-deal context files (`memory/deals/<slug>.md`): not built yet. Optional improvement when Attio Notes alone aren't enough context.
+- Apollo for Miles ("build a Desk-Monkey-equivalent for Miles that parses transcripts into Apollo"): logged as a product idea for later.
