@@ -69,3 +69,31 @@ Routines append a `[IN_PROGRESS]` stub at start and replace it with the final re
 **Skill change effective immediately for `coworker`, `daily-review`, `parse-call`, and any drafting routine.**
 
 **TOOL_CONTRACT Attio:** search=yes list=yes create=yes upsert=yes update=yes (partial — task content not updateable) attrs=yes notes=yes tasks=yes lists=yes
+
+---
+
+## 2026-05-06 — manual one-shot — HFP USA POC follow-up SECOND CORRECTION — ⚠️ Drift fixed
+
+**Trigger:** Liam called out a second error: I missed that Friday is the dial blitz day, not a review day. Transcript said "sessions starting the week after current Friday out-of-office" — Miles is OOO this Friday May 8, so blitz starts week of May 11, with Friday May 15 as the actual blitz day. My previous fixes had:
+1. Joint review on Friday May 15 (wrong — that's blitz day)
+2. Miles dialer-support windows on Tue/Wed/Thu of week of May 18 (wrong — should be Friday May 15 kickoff for the blitz)
+
+**Drift root cause:** Skipped close reading of the Fireflies action items. "Dial blitz starting the week after current Friday out-of-office" got read loosely. Should have flagged "what specific day is the blitz?" before drafting times.
+
+**Fixes:**
+- Attio Task 1ad724f1 → marked complete (wrong dates).
+- Attio Task f8f558e7 (sequence first cut) → deadline pulled in to 2026-05-14 (Wed May 13 EOD), so review can happen Thursday before Friday's blitz.
+- Attio Task 93fa365e created — Liam-owned, lists Friday May 15 kickoff windows (9am, 10am, 11am CT) for the dial blitz. Replaces 1ad724f1.
+- Gmail draft r3953375124665551055 — new Miles-only draft for Friday May 15 dialer kickoff (replaces r4281166858187808495).
+- Gmail draft r-897487427422999950 — new joint draft for Thursday May 14 review (replaces r5430521722782864968).
+- Notion `🗺️ Mutual Action Plan + Next Steps` — POC Track restructured: Week of May 11 review now Thursday May 14, new step 3 "Friday May 15 dial blitz day" with kickoff windows + standby through the day, Week of May 18+ now ongoing Apollo ramp + subsequent blitz days.
+
+**Old drafts to delete manually (no draft-delete capability):**
+- r3916374991934218578 (oldest joint, asked instead of offered)
+- r4281166858187808495 (Miles draft with Tue/Wed/Thu May 18-21 windows — wrong dates)
+- r5430521722782864968 (joint draft with Friday May 15 review — wrong day)
+
+**Drafts that stay as-is:**
+- r4705530137615562383 (Craig-only POC format question + fly-out offer).
+
+**Skill follow-up to consider:** `parse-call.md` Step 4 (Note creation) and Step 5 (Tasks) currently transcribe action items as-stated. When the meeting only loosely scopes timing (e.g. "starting the week after"), the routine should call out "needs explicit blitz/launch date" rather than guessing a default. Will surface this for Liam's review of `parse-call.md` if drift recurs.
