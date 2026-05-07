@@ -323,3 +323,39 @@ First end-to-end `assistant` run. Manual fire — Liam asked. Treated as the 14:
 - Slack channel mismatch: `digest.md` references private `#desk-monkey`; only public `#all-desk-monkey` exists. Either create the private channel or update `digest.md` + `slack.md` to canonicalize the public name.
 
 **Next run picks up:** Slack reply window since ts 1778187656.444339 in `#all-desk-monkey`.
+
+---
+
+## 2026-05-07T21:10Z — assistant — Phase 6 reply execution — ✅ Healthy
+
+**Trigger:** Liam replied in `#all-desk-monkey` thread on the 2pm digest (ts 1778192447.365589). Free-form English with four directives.
+
+**Parsed intent:**
+1. #3 Andrew Brink: "I am the one who changed it up on him for Friday so ask him if there's a better time." → reframe as apology + alt windows, not a "still good for 4?" check.
+2. Email sequence task: "The sequence is written. We don't need to email Miles anything, but that task should be checked off. I have a first draft." → mark Attio task `f8f558e7` complete; don't send obsolete dialer-windows draft `r3953375124665551055`.
+3. Miles + Craig: "I already sent the invite to Miles for next week.. It's tentative at 12:15 to 1:15 on the 14th... email Miles. Miles and Craig or get a draft that I've put that there and that I'm just checking with them." → confirmed calendar event `ueu1671393huf1f4fg50u9n93o` exists (May 14 12:15-1:15 MT, Miles + Craig invited, both needsAction). Drafted joint email.
+4. Anthony Orlovsky: "shouldn't I follow up with Anthony Orlovsky as I've not heard anything back from him?" → searched Gmail; found his May 6 thread `19dfea809e87748b` (subject "Following up - time to meet this week?"), no reply yet. Drafted a short re-up.
+
+**Writes:**
+- Attio task `f8f558e7-83f9-4735-8439-4e0d39855750` marked is_completed=true (HFP USA email sequence first cut).
+- Gmail draft `r-5440387312552631650` — Andrew Brink, apology + Mon May 11 10am / Tue May 12 11am / Wed May 13 1pm MT alts, with Friday 4pm still on the table.
+- Gmail draft `r-347385264924036069` — Miles + Craig, "tentative hold for May 14 12:15-1:15 MT, drop if it doesn't fit."
+- Gmail draft `r9078906750335126332` — Anthony Orlovsky reply on thread `19dfea809e87748b`, polite re-up.
+
+**Calendar windows pulled (Liam primary, MT, suggest_time):**
+- Mon May 11: 9am-4pm open
+- Tue May 12: 9am-4pm open
+- Wed May 13: 9am-4pm open
+- Thu May 14: 9am-12:15pm open (12:15-1:15 = HFP blitz tentative)
+
+**Surfaced for manual:**
+- Old draft `r3953375124665551055` (Friday May 15 dialer-windows to Miles) is now obsolete. Gmail MCP exposes no draft-delete; Liam to remove manually.
+- Attio name `Anthony Orlovsky` vs LinkedIn/email `Orlofski` — old spelling drift, not addressed this run.
+
+**Confirmation thread reply posted** on digest ts 1778187656.444339 with all three new draft IDs (and a follow-up correction for the Anthony id).
+
+**No items sent.** Drafts only per CLAUDE.md hard NEVER. Liam reviews + sends from Gmail directly, or replies `send <ids>` next round.
+
+**Drift / blockers:** none new.
+
+**Next run picks up:** continues to monitor `#all-desk-monkey` for further replies.
