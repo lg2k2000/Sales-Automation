@@ -282,3 +282,44 @@ Routines append a `[IN_PROGRESS]` stub at start and replace it with the final re
 **Open question still on Liam:**
 - Slack MCP: needs Claude Code session restart to register tools on the routine surface.
 - Personal allowlist file (`memory/allowlists/personal.md`) for never-delete senders: empty by default; populate via `allowlist <sender>` Slack reply (parsed in Phase 6).
+
+---
+
+## 2026-05-07T20:00Z — assistant — ✅ Healthy (first run)
+
+First end-to-end `assistant` run. Manual fire — Liam asked. Treated as the 14:00 MT slot.
+
+**TOOL_CONTRACT Attio:** search=yes list=yes create=yes upsert=yes update=yes attrs=yes notes=yes(create-only; no list-notes capability) tasks=yes lists=yes
+**TOOL_CONTRACT Slack:** postMessage=yes history=yes search=yes
+**TOOL_CONTRACT Zapier Gmail:** archive=yes(returns "not archived" despite SUCCESS) delete=yes label=yes draft=yes send=yes
+
+**Sweep:** 1 Fireflies transcript (Sales POC, already processed — skipped via dedupe); 6 Gmail threads (3 Slack onboarding noise, 1 Andrew tentative RSVP, 2 Craig calendar accepts); 3 calendar events (today's Victor Palanco declined; tomorrow CIO Tech + Apollo 1pm MT, Notion walkthrough w/ Andrew 4pm MT); 0 Slack replies (channel empty other than join).
+
+**Update:**
+- BRIEF Note `665433a8-97ca-475d-a4e1-c8e2806bf930` on HFPUSA Deal for tomorrow's CIO Tech + Apollo session (BRIEF-ei97ak4krvoui8bt353io0kkio).
+- BRIEF Note `4d445d8e-6f2f-4b99-a5bf-f94b78ae5041` on Andrew Brink Person Record for tomorrow's Notion walkthrough (BRIEF-lrjjbo8daeat9p98b0jsu3jk2k).
+- Sales POC transcript skipped — Note `MTG-01KQWQSPE7PEC4V30XZK2JN0QS` already exists on HFPUSA per prior runs.
+- Andrew tentative RSVP: no Note created (calendar event already captures the response status; not a new substantive interaction).
+- 0 new Gmail drafts staged this run (existing drafts from May 6/7 corrections still standing).
+
+**Sanitation:** 3 Slack onboarding emails (trial start, account details, confirmation code) attempted archive via Zapier `archive_email`. All 3 returned `archive_confirmation_status: "not archived"` despite execution status SUCCESS. Likely already out of INBOX or Zapier surface limitation. Soft failure; surfaced in digest. 0 promo deletions, 0 unsubscribes.
+
+**Triage surface count:** 5 items. DEFCON 2 (×2), DEFCON 3 (×2), DEFCON 4 (×1).
+- #1 D2: HFPUSA Fri 1pm Craig session — read brief + send POC format draft r4705530137615562383
+- #2 D2: Wed recap email r-590308765881101588 staged for Friday AM send
+- #3 D3: Andrew Brink walkthrough — Tentative RSVP, propose AM check-in
+- #4 D3: Friday May 15 dialer windows draft r3953375124665551055 still unsent
+- #5 D4: Slack onboarding sanitation soft-fail FYI
+
+**Digest posted:** https://deskmonkey.slack.com/archives/C0B28H75D4N/p1778187656444339 (channel `#all-desk-monkey`, ts 1778187656.444339). Note: only `#all-desk-monkey` (public) exists; no private `#desk-monkey` per `skills/digest.md` default. Posted to public for now.
+
+**Replies executed:** 0 (no prior digest in channel; nothing to act on).
+
+**Audit (Sunday only):** skipped — today is Thursday.
+
+**Drift / blockers:**
+- `BLOCKED_TOOL_GAP: Attio list-notes` — direct Attio MCP exposes `create-note` but no list-notes capability. Note dedupe currently relies on prior-run logging; risks reprocessing if state is lost.
+- `Zapier archive_email` returns SUCCESS but `not archived` — needs Liam to inspect Zapier action config or message-ID format expectation.
+- Slack channel mismatch: `digest.md` references private `#desk-monkey`; only public `#all-desk-monkey` exists. Either create the private channel or update `digest.md` + `slack.md` to canonicalize the public name.
+
+**Next run picks up:** Slack reply window since ts 1778187656.444339 in `#all-desk-monkey`.
