@@ -34,8 +34,31 @@ For each new artifact from Phase 1:
 
 - **New Fireflies transcript:** delegate to `skills/parse-call.md`. That writes the Attio Note + first-pass Gmail draft + Deal property updates + MAP Draft refresh in Notion. Counterpart action items go in the meeting Note + Deal MAP Draft, NOT as Attio Tasks.
 - **New Gmail thread (Person-matched):** create Attio Note `EMAIL-<thread_id> — <subject>` on the matching Deal. Apply relationship label per `skills/inbox.md`. Apply `_Action` if needs Liam reply, `_Waiting` if Liam already replied.
-- **System noise:** label `System/Newsletters`, `System/Receipts`, or `System/Notifications` and archive via Zapier.
+- **System noise (newsletters, notifications):** label `System/Newsletters` / `System/Notifications` and archive via Zapier. Receipts always archive, never delete.
 - **Calendar event in next 24h:** if no existing `BRIEF-<event_id>` Note on the Deal, create one with summary + last-touch context + linked open items.
+
+## Phase 2b — Inbox sanitation (delete + unsubscribe)
+
+Aggressive cleanup of marketing/promo email per `skills/inbox.md` "Aggressive promo/marketing cleanup" section. Run on every invocation.
+
+Steps:
+
+1. Search Gmail for unread or unlabeled email since `last_run_at`.
+2. For each candidate, score against the multi-signal detection rules (must hit ≥2 signals: marketing-platform sender domain, `List-Unsubscribe` header, body unsubscribe phrases, promo subject keywords, NOT in Attio People, NOT on receipt/personal allowlist).
+3. For each match:
+   - Extract unsubscribe URL from `List-Unsubscribe` header or body link.
+   - WebFetch (GET) the URL to attempt unsubscribe. Log success / needs-manual / none.
+   - Delete the email via Zapier `delete_email`.
+   - Append `PROMO_DELETED: <domain>, <subject>, unsubscribe=<status>` to runlog.
+4. Cap at 50 deletions per run. Surface remainder in digest.
+5. Aggregate in Phase 5 digest as one summary line: count + domains + count of unsubscribes needing manual click.
+
+Never delete:
+- Anything from a sender on an Attio Person Record linked to a non-Closed Deal.
+- Receipts / billing senders (stripe, billing@, anthropic, notion, attio, apollo, slack, zapier, google, microsoft, aws, linkedin billing).
+- Liam-personal allowlist (TBD `memory/allowlists/personal.md`).
+
+If only 1 signal matches → archive only, don't delete.
 
 ## Phase 3 — Triage
 
@@ -92,7 +115,22 @@ Parse each Liam message per `skills/slack.md` reply DSL:
 
 Post a confirmation thread reply on the original digest: "Executed: send 1, 2 / skip 3 / revising 4. Full log in runlog."
 
-## Phase 7 — Runlog + commit
+## Phase 7 — Weekly audit (Sunday 20:00 MT run only)
+
+Skip this phase on every run except the **Sunday 20:00 MT** invocation. Absorbs what the old `self-audit` routine did.
+
+When it runs:
+
+1. Read the last 200 lines of `memory/runlog.md`.
+2. Look for drift patterns (the same FIELD_OPTION_GAP / BLOCKED_TOOL_GAP markers showing up repeatedly, drafts that needed correction, scheduling that violated the "offer don't ask" rule, counterpart tasks accidentally created in Attio, etc.).
+3. Sweep Attio Deals for stale ones — Last Touch >14d, Stage NOT IN [Closed Won, Closed Lost, Nurture, On Hold, Unresponsive]. Each gets surfaced in the next digest as a "stalled deal — should we nurture or close-lost?" item.
+4. If `memory/runlog.md` is over 1000 lines, rotate the older half to `memory/runlog-archive-YYYY-MM.md` and keep only recent 500 lines in the live file.
+5. Append findings to `memory/audit.md` under a new `## Week ending <YYYY-MM-DD>` heading. Format: drift patterns + healthy patterns + stale deals.
+6. Surface the audit summary in the same Sunday 20:00 digest (as the last item).
+
+This means Sunday 20:00 is a "longer run" — all 6 standard phases plus the audit phase. Expect it to take longer than weekday runs. Other 6 runs in the week skip this phase entirely.
+
+## Phase 8 — Runlog + commit
 
 Replace the `[IN_PROGRESS]` stub with a final report:
 
@@ -103,14 +141,16 @@ Replace the `[IN_PROGRESS]` stub with a final report:
 
 **Sweep:** <new transcripts: N>, <new email threads: N>, <calendar events: N>, <slack replies: N>
 **Update:** <Notes created: N>, <drafts staged: N>, <Deal MAP Drafts refreshed: N>
+**Sanitation:** <PROMO_DELETED count: N>, <unsubscribes succeeded: N>, <needs-manual: N>
 **Triage surface count:** <N items, ranked DEFCON>
 **Digest posted:** <slack timestamp>
 **Replies executed:** <e.g. "sent draft r123 to mileskurtz; created invite for May 9 2pm MT">
+**Audit (Sunday only):** <drift patterns spotted: N>, <stale deals surfaced: N>, <runlog rotated: yes/no>
 **Drift / blockers:** <if any, with FIELD_OPTION_GAP / BLOCKED_TOOL_GAP markers>
 **Next run picks up:** <slack timestamp for reply window>
 ```
 
-Then `git add memory/runlog.md && git commit -m "assistant run <ISO>" && git push origin main`.
+Then `git add memory/ && git commit -m "assistant run <ISO>" && git push origin main`.
 
 If on a session branch (per harness), push to that branch and create-or-update the open PR via the GitHub MCP. Auto-merge if no conflicts.
 

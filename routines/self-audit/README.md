@@ -1,5 +1,7 @@
 # self-audit
 
+> **⚠️ SUPERSEDED 2026-05-07** — replaced by Phase 7 of `routines/assistant/`. The audit work (drift scan, stale Deal sweep, runlog rotation, audit.md append) now runs inside the assistant routine on the Sunday 20:00 MT invocation only. This README kept for trace; do not schedule this routine.
+
 Cloud routine. Runs weekly (suggested Sundays 7pm). Reads the last 200 lines of `memory/runlog.md`, identifies recurring drift patterns and errors, sweeps Attio for stale Deals, writes findings to `memory/audit.md`. Read-only on the rest of the system.
 
 ## Trigger

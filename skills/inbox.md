@@ -58,19 +58,83 @@ If no Person Record match: leave un-labeled. It's general inbox noise.
 
 ## Filters — routine-based, not Gmail-UI-based
 
-**Important:** Gmail filter creation is not exposed by Zapier MCP or the direct Gmail MCP. Liam doesn't manually set up filters. Instead, `coworker` Step 2a does noise-classification on every run (2x/day): sweeps the inbox, labels + archives system noise (newsletters, receipts, notifications) automatically.
+**Important:** Gmail filter creation is not exposed by Zapier MCP or the direct Gmail MCP. Liam doesn't manually set up filters. Instead, the `assistant` routine Phase 2b sweeps the inbox on every run, classifies, labels, archives noise, and aggressively deletes + unsubscribes from marketing/promo email.
 
-**Trade-off:** worst-case 8-hour delay (since coworker runs 2x/day) between when a notification lands and when it gets auto-labeled + archived. Compared to in-product filters (which fire instantly), this means notifications might briefly clutter inbox until the next coworker pass. Acceptable trade-off given the alternative is manual filter setup.
+**Trade-off:** worst-case ~3-hour delay (since assistant runs 5x weekdays / 2x+ weekends) between when a noisy email lands and when it gets cleaned. Compared to in-product filters (which fire instantly), small lag is acceptable given the alternative is manual filter setup.
 
-The noise-classification rules in coworker should match these patterns:
+The noise-classification rules:
 
 | Pattern | Action |
 |---|---|
-| Subject/body contains `unsubscribe` OR sender on known newsletter list (substack, mailchimp, sendgrid) | label `System/Newsletters` + archive |
-| Billing senders (stripe, billing@, invoice@, anthropic/notion/apollo/attio/google billing) | label `System/Receipts` + archive |
-| `notifications@github.com`, `calendar-notification@google.com`, no-reply / donotreply patterns | label `System/Notifications` + archive |
+| Subject/body contains `unsubscribe` OR sender on known newsletter list (substack, mailchimp, sendgrid, mailerlite, hubspot, marketo, klaviyo, customer.io) | label `System/Newsletters` + archive (don't delete; some are useful) |
+| Billing / receipt senders (stripe, billing@, invoice@, anthropic/notion/apollo/attio/google/zapier/slack billing, no-reply receipt patterns) | label `System/Receipts` + archive (NEVER delete — tax records) |
+| `notifications@github.com`, `calendar-notification@google.com`, no-reply / donotreply patterns from non-marketing senders | label `System/Notifications` + archive |
 
-The relationship-type labels (Customer, Prospect, Partner, Vendor) are NOT applied via routine noise-classification. `coworker` Step 2b applies those based on Attio Person Record lookup when processing Deal-related threads.
+The relationship-type labels (Customer, Prospect, Partner, Vendor) are NOT applied via noise classification. Phase 2 (Update) applies those based on Attio Person Record lookup when processing Deal-related threads.
+
+## Aggressive promo/marketing cleanup (Phase 2b — sanitation)
+
+This goes beyond labeling. The routine actively deletes promotional and marketing email and tries to unsubscribe at the source. Run on every assistant invocation.
+
+### Detection rules (multi-signal, conservative)
+
+An email triggers sanitation only when **at least 2 of these signals match**:
+
+- Sender domain on the known marketing-platform list (`mailchimp.com`, `mcdlv.net`, `sendgrid.net`, `mailerlite.com`, `hubspotemail.net`, `marketo.com`, `klaviyomail.com`, `customeriomail.com`, `mailgun.net`, `sendinblue.com`, `convertkit.com`, `activehosted.com`, `cmail19.com`, etc.)
+- `List-Unsubscribe` header present on the message
+- Body contains `View in browser` OR `Update your preferences` OR `If you no longer wish to receive`
+- Subject contains `% off`, `sale`, `deal`, `discount`, `flash`, `limited time`, `last chance`, `final hours`, `clearance`, `exclusive offer`
+- Sender is NOT in the Attio People records (cross-reference by `from` address)
+- Sender is NOT on the Receipt allowlist (NEVER delete receipts)
+- Sender is NOT on the Personal allowlist (Liam's family / friends — separate file `memory/allowlists/personal.md` if it exists)
+
+### Action sequence per matched email
+
+1. **Extract unsubscribe URL.**
+   - First try the `List-Unsubscribe` header (standard email header). If present and starts with `<https://...>`, that's the URL.
+   - Otherwise scan body for the literal `unsubscribe` link href.
+   - If neither found, skip the unsubscribe step (still proceed to delete).
+
+2. **Hit the unsubscribe URL.**
+   - Use `WebFetch` (GET) to the URL. Most legit unsubscribe links work as a single GET.
+   - If the URL response includes a confirmation page or "you've been unsubscribed" message, log success.
+   - If it requires a button-click POST, log `unsubscribe-needs-manual` and surface in the digest later.
+
+3. **Delete the email** via Zapier `delete_email` (action key: `delete_email` on the Gmail Zapier app). Trash, not archive — these don't deserve to keep your storage.
+
+4. **Log to runlog:**
+   ```
+   PROMO_DELETED: <sender_domain>, <subject_truncated>, unsubscribe=<success|needs-manual|none>
+   ```
+
+5. **Aggregate in digest** (Phase 5): count of cleanups in the run, list of domains where unsubscribe needed manual click. Format:
+   ```
+   📨 Inbox sanitation: 14 promos deleted (domains: mailchimp, klaviyo, sendgrid).
+       3 unsubscribes need manual click — see thread.
+   ```
+
+### Allowlists (don't touch even if they look promotional)
+
+Maintained in the routine prompt or a future `memory/allowlists/` file:
+
+- **Receipts (never delete):** stripe.com, anthropic.com, notion.so, attio.com, apollo.io, slack.com, zapier.com, google.com (billing), microsoft.com (billing), aws.amazon.com (billing), linkedin.com (billing only)
+- **Liam-personal (never touch):** any sender Liam has flagged manually. Default empty until populated.
+- **Active deals (never touch):** any sender on an Attio Person Record linked to a non-Closed Deal. Re-checked every run.
+
+### Conservative defaults
+
+- If only 1 signal matches → archive only, don't delete. (e.g., subject has "sale" but sender is a known person → just archive.)
+- If sender has ever replied to Liam's outbound → never delete. Build this from Gmail's `from:` history.
+- If unsubscribe attempt fails (HTTP error, 4xx/5xx) → still delete the email, but flag for manual unsubscribe in the digest.
+- If the routine deletes more than 50 emails in one run → cap at 50, surface remainder in digest, wait for next run. Prevents runaway accidental deletion if rules drift.
+
+### Risk + recovery
+
+False positives are inevitable. Mitigations:
+
+- Gmail's Trash retains deleted emails for 30 days. Recoverable.
+- The runlog records every deletion with sender + subject snippet, so you can ctrl-F and recover specific ones.
+- Liam can add senders to a "never delete" allowlist by replying to a digest with `allowlist <sender>` (parsed in Phase 6 per `skills/slack.md`).
 
 ## Daily Liam flow
 
@@ -79,7 +143,7 @@ The relationship-type labels (Customer, Prospect, Partner, Vendor) are NOT appli
 3. End of day: inbox empty.
 4. Once a week: scan `_Waiting` view. Anything sitting there >5 days will also have an Attio nudge task by then.
 
-## What `coworker` does with labels
+## What `assistant` does with labels
 
 When processing a Gmail thread from an Attio Person:
 1. Apply relationship label per the mapping above (Customer / Prospect / Partner / Vendor).
@@ -87,11 +151,9 @@ When processing a Gmail thread from an Attio Person:
 3. Apply `_Waiting` if Liam already replied and is waiting on them.
 4. Never apply two state labels at once. `_Action` and `_Waiting` are mutually exclusive.
 
-## What `daily-review` does with labels
-
-When sweeping for left-on-read prospects:
+When sweeping for left-on-read prospects (Phase 3 — Triage):
 1. Find threads with relationship label = `Prospect` AND last reply from counterpart >5d ago.
-2. Don't change Gmail labels. Surface as an Attio soft-nudge Task instead.
+2. Don't change Gmail labels. Surface as a Liam-owned Attio nudge Task in Phase 4 + a digest item in Phase 5.
 
 ## Hard rules
 

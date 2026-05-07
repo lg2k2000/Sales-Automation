@@ -178,19 +178,19 @@ When `coworker` or `daily-review` needs project context (e.g., a Closed Won deal
 
 ## Routines
 
-**One daily routine, five times a day, in fixed phase order. Plus weekly audit. Plus a manual one-shot.**
+**One routine. Period. Runs 5 times a day, 7 days a week, in fixed phase order. Self-audit absorbed into the Sunday 20:00 run.**
 
 | Routine | Where | Cadence | Job |
 |---|---|---|---|
-| `assistant` | Cloud | 5x weekdays (07:00, 11:00, 14:00, 17:00, 20:00 MT) | The single Desk Monkey routine. Six phases: Sweep → Update canonical state (Attio + Notion) → Triage drift → Draft next moves → Digest to Slack `#desk-monkey` → Execute Liam's Slack replies. Replaces the old `coworker` + `daily-review` split. See `routines/assistant/`. |
-| `self-audit` | Cloud | Sundays 7pm MT | Scan last 200 lines runlog for drift patterns. Stale Deal sweep (Attio Deals with Last Touch >14d). Compact runlog if it's > N lines (rotate old entries to `memory/runlog-archive-YYYY-MM.md`). |
-| `contact-migration` | Cloud | Manual one-shot (already run) | Notion CRM (Contacts + Deals + Activity Log + DEFCON Tasks) → Attio. Idempotent. |
+| `assistant` | Cloud | 5x daily, 7 days/week (07:00, 11:00, 14:00, 17:00, 20:00 MT) | The only Desk Monkey routine. Eight phases: Sweep → Update canonical state → Sanitation (delete + unsubscribe promo email) → Triage drift → Draft next moves → Digest to Slack `#desk-monkey` → Execute Liam's Slack replies → Weekly audit (Sunday 20:00 only) → Runlog. Replaces `coworker` + `daily-review` + `self-audit`. See `routines/assistant/`. |
+| `contact-migration` | Cloud | Manual one-shot (already run) | Notion CRM (Contacts + Deals + Activity Log + DEFCON Tasks) → Attio. Idempotent. Not scheduled. |
 | `coworker` | **superseded 2026-05-07** | n/a | Replaced by phases 1-4 of `assistant`. README kept for trace. |
 | `daily-review` | **superseded 2026-05-07** | n/a | Replaced by phases 3-4 + 6 of `assistant`. README kept for trace. |
+| `self-audit` | **superseded 2026-05-07** | n/a | Replaced by phase 7 of `assistant` (Sunday 20:00 MT run only). README kept for trace. |
 
 Cron strings live in the Anthropic routine UI, not in this repo. Schedules above are documentation of intent.
 
-**Pro plan budget:** 5 routine runs/day. The new `assistant` cadence uses all 5. Self-audit consumes 1 run on Sundays (replaces a weekday slot that day).
+**Pro plan budget:** 35 routine runs/week (5 × 7). At cap. Sunday 20:00 absorbs the weekly audit work in the same run; no extra slot needed.
 
 **Surfacing channel:** Slack `#desk-monkey`. Each digest gets numbered items `[#1]`, `[#2]`, etc. Liam replies free-form in the digest's thread. The next scheduled `assistant` run reads + executes those replies (worst case ~3hr latency at 5x/day cadence; see `routines/assistant/README.md` "Open architectural question" for real-time options).
 
