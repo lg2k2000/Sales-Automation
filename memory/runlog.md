@@ -97,3 +97,32 @@ Routines append a `[IN_PROGRESS]` stub at start and replace it with the final re
 - r4705530137615562383 (Craig-only POC format question + fly-out offer).
 
 **Skill follow-up to consider:** `parse-call.md` Step 4 (Note creation) and Step 5 (Tasks) currently transcribe action items as-stated. When the meeting only loosely scopes timing (e.g. "starting the week after"), the routine should call out "needs explicit blitz/launch date" rather than guessing a default. Will surface this for Liam's review of `parse-call.md` if drift recurs.
+
+---
+
+## 2026-05-06 — manual one-shot — HFP USA POC follow-up THIRD CORRECTION — ⚠️ Drift fixed
+
+**Trigger:** Liam called out three more issues:
+1. Three branches existed on GitHub (an orphan merged-but-not-deleted from PR #2 was clutter).
+2. Two Notion DEFCON tasks for the dormant customer list cleanup + Apollo enrichment were still open even though Liam already did the work pre-meeting (transcript captured "list trimmed from ~3,500 to ~1,500 active").
+3. Notion's pipeline situation is broken: two legacy Deal DBs (`Deals` on Sales Hub + standalone `💰 Deals Pipeline`) with stale stages, no clear flag that Attio is canonical now.
+
+**Fixes:**
+- Notion task `b2e6a831` (Clean 3,800+ dormant customer CSV) → Status set to Done, Notes updated to "DONE as of pre-2026-05-06 meeting. Liam scrubbed list from ~3,500 to ~1,500 active."
+- Notion task `eaac557b` (Enrich dormant list in Apollo) → Status set to Done, Notes updated similarly.
+- Notion `🗺️ Mutual Action Plan + Next Steps` POC Track step 1 updated: list enrichment now flagged Done up front.
+- Notion `🦧 Desk Monkey Sales Hub` (root page `5213634e...`) → red-background callout inserted at top: **Attio is canonical for pipeline now**, listing the current Attio stages (New / Discovery / Qualified / POC / Co-Building / Proposal / Negotiation / Procurement / Closed Won / Closed Lost / Nurture / On Hold / Unresponsive) and flagging legacy Notion DBs (Deals / DEFCON Tasks / Activity Log / Contacts) as do-not-write.
+
+**Branch cleanup attempted but blocked:**
+- `git push origin --delete claude/sweet-heisenberg-0Vsdz` → HTTP 403 (harness restricts pushes to designated session branch only).
+- GitHub MCP surface has no `delete_branch` capability either.
+- Surfaced to Liam: nuke the orphan from GitHub UI manually.
+
+**Drift root cause:**
+- The `parse-call` skill (and the prior runs of this manual one-shot) didn't reconcile new meeting state with existing Notion DEFCON Tasks. When a transcript indicates a task is already done, the routine should sweep for matching open Notion tasks and close them.
+- Sales Hub root page hadn't been updated when the Notion → Attio CRM migration happened. Stale entry point for anyone (or any routine) opening Notion to find pipeline.
+
+**Skill follow-ups:**
+- Add to `parse-call.md`: after Step 5 (Attio Tasks), add a "legacy Notion DEFCON Tasks reconciliation" check — if transcript reveals a task is done that has a matching open Notion DEFCON task, close the Notion task too. This is transitional until Notion DEFCON Tasks DB is fully retired.
+- Long-term: `contact-migration` should also archive/delete the legacy Notion CRM DBs (Deals / `💰 Deals Pipeline` / Activity Log / Contacts). Today they linger and confuse.
+- Branch cleanup: surface to Liam that the harness creates a fresh session branch each run despite CLAUDE.md saying "no session branches." Either CLAUDE.md needs updating or the harness setting needs changing. Will not write code to fix without explicit guidance.
