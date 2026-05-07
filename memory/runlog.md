@@ -126,3 +126,42 @@ Routines append a `[IN_PROGRESS]` stub at start and replace it with the final re
 - Add to `parse-call.md`: after Step 5 (Attio Tasks), add a "legacy Notion DEFCON Tasks reconciliation" check — if transcript reveals a task is done that has a matching open Notion DEFCON task, close the Notion task too. This is transitional until Notion DEFCON Tasks DB is fully retired.
 - Long-term: `contact-migration` should also archive/delete the legacy Notion CRM DBs (Deals / `💰 Deals Pipeline` / Activity Log / Contacts). Today they linger and confuse.
 - Branch cleanup: surface to Liam that the harness creates a fresh session branch each run despite CLAUDE.md saying "no session branches." Either CLAUDE.md needs updating or the harness setting needs changing. Will not write code to fix without explicit guidance.
+
+---
+
+## 2026-05-07 — manual one-shot — HFP USA verification sweep + tomorrow's invite + skill rules update — ✅ Healthy
+
+**Trigger:** Liam asked for (a) verification that current Attio tasks are truly outstanding (haven't already been emailed/invited), (b) a tentative Calendar invite for May 8 2pm MT cold-call blitz with Miles + Craig, (c) a polished recap email + MAP for tomorrow's send, (d) a directive that counterpart-owned tasks should NOT be in Attio (they live in counterparts' own systems — Miles → Apollo).
+
+**Calendar invite SENT** (per Liam's explicit per-invite authorization):
+- Event id `ueu1671393huf1f4fg50u9n93o`
+- "HFP cold call blitz (tentative)"
+- May 8 14:00-15:00 MT
+- Attendees: mileskurtz@hfpusa.com, cwalicek@ciotech.us
+- Google Meet generated, notificationLevel=ALL (counterparts received the invite email)
+
+**Gmail draft created (NOT sent):**
+- `r-590308765881101588` — "Wednesday recap + path forward" to Miles + Craig — recap of May 6 Sales POC + full Mutual Action Plan table. Written to send Friday May 8 morning.
+
+**Attio Tasks marked complete (counterpart-owned, moved out of Liam's todo per new directive):**
+- 745ea5e2 (Miles deliver sample to Basil)
+- a0a83b54 (Miles save Basil contact in Apollo)
+- eb6be79d (Miles share Apollo with Laura/Jesse)
+- 3d51dead (Craig domain purchase)
+
+**Notion updates:**
+- Houston Foam Deal `28d39ba2` — `MAP Draft` field replaced with v3 (post-May-6 path), v2 (pre-meeting plan) preserved below as superseded.
+
+**Skill changes (durable):**
+- `skills/gotchas.md` — `Counterpart-owned task pattern` rewritten: counterpart tasks do NOT live in Attio, they live in the counterpart's system; the Notion MAP captures cross-owner commitments. Old pattern (empty-assignee Attio Tasks) deprecated. Also added `Calendar invite authorization` section: per-invite explicit auth from Liam allows `create_event` with notificationLevel=ALL; Gmail send still NEVER.
+- `skills/parse-call.md` — Step 5 rewritten: counterpart action items go in meeting Note + Notion MAP Draft, NOT Attio Tasks. Hard NEVERs updated.
+
+**Verification evidence (truly-outstanding sweep results):**
+- Original Sales POC recap email (22:07 UTC May 6) NOT sent (was a draft, since deleted by Liam via Zapier).
+- All other Liam-owned outbound either sent (Anthony follow-up, Andrew Brink invite switch, Craig POC format question, Top-10-titles thread) or in current drafts (Friday review + Friday dialer windows).
+- Calendar invites already in place: Thu May 8 1pm MT (CIO Tech + Apollo, Craig only), Fri May 8 4pm MT (Notion walkthrough with Andrew Brink), Thu May 7 9am BST (Attio onboarding with Victor).
+
+**Open issues surfaced:**
+- Spelling: Apollo + LinkedIn + email all show **Walicek** (cwalicek@ciotech.us, linkedin.com/in/craigwalicek). Liam asked to rename to **Walachek** in Google Contacts. Did not change Attio name pending Liam confirmation; flagged the evidence.
+- Google Contacts MCP not wired in current surface; will check Zapier discover for Google Contacts actions.
+- Apollo as Miles's task store: surfaces a product idea — "build a Desk-Monkey-equivalent for Miles that parses transcripts and writes tasks into Apollo." Logged for future.
