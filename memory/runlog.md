@@ -165,3 +165,33 @@ Routines append a `[IN_PROGRESS]` stub at start and replace it with the final re
 - Spelling: Apollo + LinkedIn + email all show **Walicek** (cwalicek@ciotech.us, linkedin.com/in/craigwalicek). Liam asked to rename to **Walachek** in Google Contacts. Did not change Attio name pending Liam confirmation; flagged the evidence.
 - Google Contacts MCP not wired in current surface; will check Zapier discover for Google Contacts actions.
 - Apollo as Miles's task store: surfaces a product idea — "build a Desk-Monkey-equivalent for Miles that parses transcripts and writes tasks into Apollo." Logged for future.
+
+---
+
+## 2026-05-07 — Notion redesign + Google Contacts wiring + branch cleanup — ✅ Healthy
+
+**Trigger:** Liam authorized the Notion cleanup pass + Zapier Google Contacts.
+
+**PR #4 merged into main** (squash, commit `704adb76`). Outstanding orphan branch `claude/sweet-heisenberg-DGLg4` still on remote — Liam to delete in GitHub UI.
+
+**Notion `📈 Deals` (canonical) — 4 saved views added:**
+- 🔥 Hot This Week — Buyer Behavior ≥ 3 AND Champion Verdict in [Coach, True Champion] AND Stage NOT Closed
+- ⏳ Stalled (oldest first) — Stage NOT IN [Closed Won/Lost, Nurture, On Hold, Unresponsive], sorted Last Touch ASC
+- 🌳 By Source — board grouped by Source (Chris Introduction / Direct / Referral / Cold)
+- 🤝 Resale / Referral Track — Source = Chris Introduction OR Service Line contains Custom
+
+**Notion `💰 Deals Pipeline` (legacy) — renamed to `📦 ARCHIVED — Deals Pipeline (legacy, do not use — Attio canonical)`** so it visibly clears out of the working set. Single orphan stub row (Anthropic, $10K Lead) retained for trace; not actively referenced.
+
+**Notion Sales Hub root — pruned:**
+- DEFCON Tasks header now reads: "Migrated to Attio Tasks. The legacy DB below is read-only reference; do not write here."
+- Activity Log header now: "Migrated to Attio Notes (per Deal Record). The legacy DB below is read-only reference; do not write here."
+- Contacts header now: "Migrated to Attio People. The legacy DB below is read-only reference; do not write here. Gmail integration in Attio handles contact-relationship visibility natively."
+- Inline DBs left in place (Notion MCP doesn't expose delete-block reliably) but flagged.
+
+**Zapier Google Contacts:** already enabled (7 actions: read contact, create contact, update contact, add to group, group, photo, raw request). No auth needed. Ready to add Craig once Liam confirms spelling (Walicek per LinkedIn/email vs Walachek per Liam's note).
+
+**Outstanding skill follow-ups for next round (Liam's strategic asks):**
+- Routine consolidation: collapse coworker (2x/day) + daily-review (1x/day) into one `assistant` routine running 4-5x/day in proper order (sweep → process → digest → surface).
+- Surfacing channel: Slack as primary push (native official Anthropic MCP), email digest as fallback. Common Room evaluated and skipped (community-engagement tool, not aligned with Desk Monkey buyers).
+- Memory architecture: per-deal context files (`memory/deals/<slug>.md`) populated by the consolidated routine.
+- Per-deal MAP doctrine: Notion `MAP Draft` field is the canonical mutual action plan. Routines write the cross-owner MAP there, not Attio Tasks.
