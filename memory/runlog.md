@@ -247,3 +247,38 @@ Routines append a `[IN_PROGRESS]` stub at start and replace it with the final re
 - Common Room: skipped (community-engagement tool, not aligned with current buyers).
 - Per-deal context files (`memory/deals/<slug>.md`): not built yet. Optional improvement when Attio Notes alone aren't enough context.
 - Apollo for Miles ("build a Desk-Monkey-equivalent for Miles that parses transcripts into Apollo"): logged as a product idea for later.
+
+---
+
+## 2026-05-07 — assistant v2: 7-day cadence + inbox sanitation + audit absorbed — ✅ Healthy
+
+**Trigger:** Liam wanted (1) the routine to run Sat + Sun too, (2) aggressive promo/marketing email cleanup with unsubscribe + delete via Zapier, (3) self-audit absorbed into the single routine (he deleted all the other Claude routines — only `assistant` is scheduled now).
+
+**Files updated:**
+- `skills/inbox.md` — major addition: "Aggressive promo/marketing cleanup (Phase 2b — sanitation)" section. Multi-signal detection rules (≥2 of: marketing-platform sender domain, List-Unsubscribe header, body unsubscribe phrases, promo subject keywords, NOT in Attio, NOT on receipt allowlist). Action sequence: extract unsubscribe URL → WebFetch GET to attempt unsubscribe → Zapier `delete_email`. Allowlists for receipts (NEVER delete) and active deal contacts. 50-deletion cap per run. Conservative defaults (1-signal → archive only).
+- `routines/assistant/prompt.md` — added Phase 2b (Inbox sanitation), Phase 7 (Weekly audit, Sunday 20:00 MT only). Phase 8 = runlog + commit. Sanitation summary line added to runlog format.
+- `routines/assistant/README.md` — updated cadence to 5x daily 7 days/week (was weekdays only). Phases list now 1-8. Replaces table includes self-audit row. Pro plan budget: 35 runs/week at cap.
+- `CLAUDE.md` — Routines table collapsed: only `assistant` (5x/day, 7 days/week) + `contact-migration` (one-shot). `coworker`, `daily-review`, `self-audit` all flagged superseded. Budget math updated.
+- `routines/self-audit/README.md` — SUPERSEDED 2026-05-07 banner added.
+
+**Cadence:**
+- Mon-Sun: 5x daily at 07:00, 11:00, 14:00, 17:00, 20:00 MT
+- Sunday 20:00 MT: includes Phase 7 (weekly audit) on top of standard 6 phases
+
+**Cron expression (timezone-aware, America/Denver):**
+```
+0 7,11,14,17,20 * * *
+```
+
+**Cron expression (UTC fallback, MDT — May-Nov):**
+```
+0 13 * * *    # 7am MT
+0 17 * * *    # 11am MT
+0 20 * * *    # 2pm MT
+0 23 * * *    # 5pm MT
+0 2 * * *     # 8pm MT (next day UTC, but * day-of-week means daily anyway)
+```
+
+**Open question still on Liam:**
+- Slack MCP: needs Claude Code session restart to register tools on the routine surface.
+- Personal allowlist file (`memory/allowlists/personal.md`) for never-delete senders: empty by default; populate via `allowlist <sender>` Slack reply (parsed in Phase 6).

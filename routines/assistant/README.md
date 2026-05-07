@@ -1,34 +1,37 @@
 # Routine: assistant
 
 **Last updated:** 2026-05-07
-**Status:** active — replaces `coworker` (2x/day) + `daily-review` (1x/day)
+**Status:** active — the only Desk Monkey routine. Replaces `coworker` (2x/day) + `daily-review` (1x/day) + `self-audit` (weekly), all absorbed into one prompt.
 
 ## Purpose
 
-The single Desk Monkey routine. Sweeps the world, updates the canonical CRM, scores what needs Liam's attention, drafts the next move, and pushes a digest to Slack. Liam responds in Slack with free-form text; the next run picks up his replies and executes.
+The single Desk Monkey routine. Sweeps the world, updates the canonical CRM, sanitizes the inbox (deletes promo/marketing crap and unsubscribes), scores what needs Liam's attention, drafts the next move, pushes a digest to Slack. Liam responds in Slack with free-form text; the next run picks up his replies and executes.
 
 ## Cadence
 
-5 runs per weekday, scheduled in the Anthropic routine UI (cron strings live there, not in this repo). Documented intent:
+5 runs every day (7 days per week), scheduled in the Anthropic routine UI (cron strings live there, not in this repo). Documented intent (America/Denver):
 
 - **07:00 MT** morning brief — yesterday's misses, today's calendar, fresh transcripts
 - **11:00 MT** late-morning — process AM email, surface follow-ups
 - **14:00 MT** afternoon — meeting prep for late-day calls, mid-cycle drift sweep
 - **17:00 MT** end of day — tomorrow prep, draft next-day touches, prune AM drafts
-- **20:00 MT** wrap — digest of unhandled items, MAP refreshes, runlog seal
+- **20:00 MT** wrap — digest of unhandled items, MAP refreshes, runlog seal. **Sunday 20:00 only:** also runs the weekly audit phase (drift patterns + stale deal sweep + runlog rotation).
 
-Pro plan budget: 5 routine runs/day. Self-audit consumes 1 run on Sundays (still separate).
+Pro plan budget: 35 routine runs/week (5 × 7). At cap. The Sunday 20:00 run absorbs the weekly audit work — no extra routine needed.
 
 ## Phases (run in fixed order, every invocation)
 
-The routine is one prompt, six phases, executed sequentially. Cross-phase contamination is the main risk — each phase reads only the artifacts from prior phases.
+The routine is one prompt, eight phases, executed sequentially. Cross-phase contamination is the main risk — each phase reads only the artifacts from prior phases.
 
 1. **Sweep** — pull deltas across Fireflies / Gmail / Calendar / Apollo / Slack `#desk-monkey` since last run
 2. **Update** — apply `parse-call` to new transcripts, label new email, refresh Deal MAP Drafts
+2b. **Sanitation** — aggressive promo/marketing email cleanup with unsubscribe + delete via Zapier (per `skills/inbox.md`)
 3. **Triage** — score each active Deal against drift criteria; build the surface-list
 4. **Draft** — pre-build Gmail drafts, Calendar invite proposals, Liam-owned Attio nudge tasks
 5. **Digest** — compose and post to Slack `#desk-monkey` per `skills/digest.md`
 6. **Execute replies** — read Slack replies since last digest, parse free-form intent, execute on Liam's behalf (per `skills/slack.md`)
+7. **Weekly audit** — **Sunday 20:00 MT run only.** Drift pattern scan, stale Deal sweep, runlog rotation, append findings to `memory/audit.md`. Other runs skip.
+8. **Runlog + commit** — append final report, push to repo
 
 See `prompt.md` for the full phase-by-phase prompt body.
 
@@ -38,9 +41,11 @@ See `prompt.md` for the full phase-by-phase prompt body.
 |---|---|
 | `coworker` 2x/day (Fireflies + Gmail + Calendar sweep) | Phases 1-4 of `assistant` |
 | `daily-review` 1x/day (prune drafts, verify counterpart commitments, prospect sweep) | Phases 3-4 of `assistant`, plus reply-execution in Phase 6 |
+| `self-audit` weekly (drift scan + stale deal sweep + runlog compaction) | Phase 7 of `assistant`, only on Sunday 20:00 MT run |
 | Drafts pile up in Gmail; Liam has to remember to send | Slack digest with `send N` reply pattern |
+| Promotional / marketing junk piles up in inbox | Phase 2b deletes + unsubscribes per multi-signal rules |
 
-`self-audit` (weekly Sunday) and `contact-migration` (one-shot) stay separate.
+`contact-migration` stays separate as a one-shot. Already-run; not scheduled.
 
 ## Tool contract preflight
 
