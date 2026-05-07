@@ -89,21 +89,18 @@ DEFCON default is 3. Bump to 2 if "today/ASAP/this week" language. Bump to 1 if 
 
 Categories: Apollo Setup / Pipeline Build / Email Infrastructure / Client Deliverable / Data Cleanup / Meeting Prep / Follow-up / Internal.
 
-**Counterpart-owned action item:**
-```
-content: "[DEFCON 3] [<Category>] [<counterpart name>] <action>
+**Counterpart-owned action item:** Do NOT create an Attio Task. Counterparts have their own systems (Apollo for Miles, etc.). Instead:
 
-counterpart-owned: <person> agreed to <action> by <date> on <meeting>.
-Verify via <Gmail attachment from <email> | Calendar event with <email> | Notion shared doc | etc.>
+1. **Capture in the meeting Note's `## Action Items` section** with owner + by-when + verification path:
+   ```
+   - [<counterpart name>] <action> by <date> — verify via <Gmail thread X | Apollo activity log | Calendar invite | shared doc>
+   ```
+2. **Add the same line to the Deal's Notion `MAP Draft` field** (the canonical mutual action plan table).
+3. `daily-review` will sweep the MAP, check Liam's calendar/inbox for evidence past the deadline, and create a **Liam-owned** nudge Task in Attio if and only if evidence is missing.
 
-Linked Note: MTG-<fireflies_id>"
+This keeps Liam's Attio task list exclusively his own, while still tracking what counterparts owe.
 
-deadline_at: stated deadline if present; otherwise +5 days from meeting date
-assignees: []   # empty assignees is the marker for daily-review's verification sweep
-linked_records: [Deal Record, Person Record]
-```
-
-**Dedupe before creating:** use the Attio list-tasks capability for this Deal. If an Open Task with similar title (same Owner + similar action) exists, skip creation; instead append a note to that Task's content via the Attio update-task capability.
+**Dedupe before creating Liam-owned tasks:** use the Attio list-tasks capability for this Deal. If an Open Task with similar title (same Owner + similar action) exists, skip creation; instead append a note to that Task's content via the Attio update-task capability.
 
 ## Step 6 — Deal Record attribute updates (high-confidence only)
 
@@ -162,5 +159,5 @@ This is the **first-pass draft**. After creating it, append a marker line to the
 - NEVER advance Stage on weak signals.
 - NEVER overwrite Deal Evolution. Append.
 - NEVER skip the Tasks step. Action items hitting Attio is the entire point.
-- NEVER mark a counterpart-owned task with assignees=[Liam]. Empty assignees is the verification sweep's signal.
+- NEVER create counterpart-owned Attio Tasks (with empty or any assignees). Counterpart commitments go in the meeting Note + Deal's Notion MAP Draft. Liam's Attio task list is his own only.
 - NEVER dump the raw transcript into the Attio Note. Summary only.

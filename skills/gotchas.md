@@ -65,10 +65,28 @@ Status semantics in title (when state is needed beyond is_completed):
 
 ## Counterpart-owned task pattern
 
-- assignees field in Attio Task is empty
-- Title prefix Owner = `<counterpart name>`
-- Description includes verification path: "Verify via <Gmail attachment from <email> | Calendar event with <email> | Notion shared doc | etc.>"
-- daily-review sweeps these past their deadline_at and creates Liam-owned nudge tasks if no proof of completion
+**Counterpart-owned tasks do NOT live in Attio.** Attio Tasks are exclusively Liam's todos. Counterparts have their own systems:
+
+- **Miles (HFP USA)** → Apollo (his daily driver CRM)
+- **Craig (CIO Tech)** → his own tracking; surfaced in shared Notion mutual action plans
+- **Other counterparts** → handled in their own workspace
+
+**Where counterpart commitments DO live:**
+
+1. The Deal's Notion `MAP Draft` field — single table, owner column captures Liam vs counterpart, by-when, verification path
+2. Attio Notes attached to the Deal — written into the action items section of the meeting Note, but NOT promoted to a Task
+
+**For nudging when a counterpart is overdue:** `daily-review` reads the MAP, checks Liam's Gmail/Calendar for evidence the counterpart did the thing, and only creates a **Liam-owned** Attio Task ("[DEFCON 3] [Follow-up] [Liam] Nudge Craig on the new sending domain (overdue 2d)") when evidence is missing past the deadline.
+
+Old pattern (deprecated): empty-assignee Attio Tasks tagged with the counterpart's name in the title prefix. That cluttered Liam's task list with rows he can't directly act on.
+
+## Calendar invite authorization
+
+Default: NEVER auto-create a Calendar event with attendees. CLAUDE.md hard NEVER stands.
+
+**Exception:** when Liam explicitly authorizes a specific invite in conversation ("send the invite for X", "set up the meeting for tomorrow at 2pm"), the routine MAY call `create_event` with `notificationLevel=ALL` so attendees actually get the invite email. Authorization is **per-invite, not blanket** — Liam re-authorizes each one.
+
+Email send (Gmail send action) is still NEVER. Drafts only, regardless of authorization on Calendar.
 
 ## Dedupe rules
 
@@ -92,7 +110,7 @@ Status semantics in title (when state is needed beyond is_completed):
 - Creating duplicate Attio Tasks (forgetting to query existing tasks first).
 - Forgetting to embed source ID in Note title (next run reprocesses everything because dedupe query can't match).
 - Letting `[IN_PROGRESS]` runlog stubs stay [IN_PROGRESS] because the routine errored mid-run. Wrap work in try/recover, write 🔴 Failed report on exception.
-- Counterpart-owned tasks created with assignees=[liam@...] (verification sweep can't act). assignees MUST be empty for counterpart-owned.
+- Counterpart-owned tasks getting created in Attio at all — they belong in the counterpart's system (Apollo for Miles, etc.) and the Notion MAP Draft. Liam's Attio task list is exclusively his own.
 - Writing to Notion Contacts / Deals / Activity Log / DEFCON Tasks DBs (those are legacy; write to Attio).
 
 ## Non-Desk-Monkey filter
