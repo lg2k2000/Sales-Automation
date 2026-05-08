@@ -1,43 +1,53 @@
-# Notion Agents build pack
+# Notion AI Agents Skill
 
-Six files, each focused on one concern. Load whichever you need; each is independently usable.
+A Claude Skill for building six Notion 3.0 AI Agents in Liam Glennie's workspace. Notion can't self-build its own agents — that's why this Skill exists. Everything else (CRM databases, schemas, transcripts, skill templates) is already in the workspace.
 
-| File | What's in it | When to load |
+## What this Skill builds
+
+Six AI Agents that run inside Notion 3.0:
+
+| # | Agent | Trigger |
 |---|---|---|
-| `voice-rules.md` | Style guide: how to write so Liam doesn't catch an AI tell. Compressed humanizer rules, signature spec, scheduling-as-offer, read-aloud test. | Any time an agent (or you) drafts content for Liam or his counterparts. |
-| `banned-list.md` | Hard no-fly list: banned vocab, banned phrases, banned punctuation, banned patterns. | Same — pair with voice-rules. |
-| `reference-ids.md` | Every Notion UUID, page ID, draft ID, Attio ID, calendar event ID, Slack ID. Single source of truth. | Whenever you need to navigate to or write to a specific resource. |
-| `phased-plan.md` | Six-phase build sequence with "go" criteria between each phase. | Before kicking off the build. Reference at every phase boundary. |
-| `agent-specs.md` | Six AI Agent specs: name, job, inputs, outputs, trigger, scope, tools, instructions, test. | Phase 3 (deploy agents). |
-| `operating-constraints.md` | Hard NEVERs, destructive-action gates, idempotency rules, rate limits, OAuth scopes, allowlists, stage lifecycles, run log spec. | Read once before starting; reference whenever an agent or tool is about to do something risky. |
+| 1 | 🔗 Meeting Linker | scheduled hourly |
+| 2 | 📧 Email Sweeper | scheduled hourly |
+| 3 | 📅 Calendar Sweeper | scheduled 4h |
+| 4 | 🦧 Triage / Daily Brief | scheduled 7am + 8pm MT |
+| 5 | ✉️ Reply Executor | on-comment |
+| 6 | 🧹 Inbox Sanitation | scheduled 4h |
+
+## What this Skill does NOT do
+
+- Build any database (Deals, Contacts, Activity Log, Projects already exist)
+- Modify any database schema
+- Migrate data from anywhere
+- Send any email
+- Write any code outside Notion's agent runtime
+
+## File index (load all six)
+
+| File | What's in it |
+|---|---|
+| `phased-plan.md` | The 4-phase build sequence (confirm → connections → deploy 6 agents → verify). |
+| `agent-specs.md` | The 6 agents in detail: name, job, inputs, outputs, trigger, scope, tools, instructions block, test case. |
+| `voice-rules.md` | Style guide that goes INTO every agent's instructions for content drafting. |
+| `banned-list.md` | Hard no-fly list (vocab, phrases, punctuation, patterns) that goes INTO every agent's instructions. |
+| `reference-ids.md` | Workspace UUIDs, DB IDs, contact IDs, signature block. |
+| `operating-constraints.md` | Hard NEVERs, idempotency rules, rate limits, allowlists, status lifecycles. Goes INTO every agent's instructions. |
 
 ## How to use
 
-**If you're a browser-control agent (Claude Computer Use / Claude Chrome / Comet) building this:** load all six in order. The `phased-plan.md` is your roadmap. Confirm Phase 0 with Liam before crossing any boundary.
+**If you're a browser-control agent (Claude Computer Use / Claude Chrome / Comet) running this Skill:** load all six files. Start at Phase 0 in `phased-plan.md`. Confirm decisions with Liam before crossing each phase boundary.
 
-**If you're a researcher comparing tools:** the `phased-plan.md` and `agent-specs.md` together describe the job. Use them to evaluate which automation tool can actually do this in 2026.
+**If you're a researcher comparing tools:** `phased-plan.md` and `agent-specs.md` together describe the job. Use them to evaluate which automation tool can actually do this in 2026.
 
-**If you're Liam:** open the Daily Brief once it exists. Talk to it. The agents handle the rest.
+## Prerequisites (already done; verify before starting)
 
-## Plan-of-record
+- Notion workspace `Liam Glennie's Workspace HQ` exists with the 5 CRM databases populated
+- Notion 3.0 plan with AI Agents enabled
+- Notion Connections for Gmail + Google Calendar + Google Drive set up (Phase 1 verifies)
+- Native Notion meeting transcription is on (transcripts arrive automatically)
 
-- Attio retired 2026-05-07. Notion canonical for Deals, Contacts, Activity Log, Projects.
-- Six Notion 3.0 AI Agents replace the prior Claude Code `assistant` cron routine.
-- Voice rules + banned list apply to every external draft.
-- Hard NEVERs at top of `operating-constraints.md` are non-negotiable.
+## Open decisions (default in parens — confirm at Phase 0)
 
-## Open decision points (default value in parens; ask Liam to confirm or override)
-
-1. **Email + Calendar feed cadence** (hourly scheduled sweep) — alternative: Zapier/Make webhook for real-time
-2. **Daily Brief shape** (single overwriting page) — alternative: Briefs DB with one row per brief for history
-3. **Repo fate** (demote to docs) — alternative: kill repo, or keep it and route runlog there too
-4. **Slack sidecar** (off — Notion comments on Daily Brief is the talkback surface) — alternative: keep Slack `#all-desk-monkey` as a parallel surface
-
-## Latest sweep findings (2026-05-07, 14:00 MT)
-
-- 4 CRM databases live in Notion with full Selling With + MEDPICC schema (Deals, Contacts, Activity Log, Projects). Currently flagged "legacy"; Phase 1 reactivates them.
-- 17 skill templates already exist on the 🚧 Master Notion Agent page (Skill: Deal Update, Skill: Follow-up Email, Skill: Pipeline Audit, etc.). Reference these from agent prompts; don't rewrite.
-- Notion native meeting transcription is active. ~40 transcripts in the past month. Drop Fireflies entirely.
-- ~10 records in Attio need migration (HFP USA Deal, Andrew Brink, Anthony Orlovsky, three Liam tasks, two BRIEF Notes; Craig Walicek already exists in Notion Contacts).
-- 5 Gmail drafts sitting in Liam's Gmail Drafts from today's session — kept; not deleted.
-- 6th draft (Friday May 15 dialer windows to Miles) obsolete after Liam's May 14 invite — Liam to delete manually.
+1. **Email + Calendar feed cadence** (hourly scheduled) — alternative: real-time webhook
+2. **Daily Brief shape** (single overwriting page) — alternative: Briefs DB with one row per brief
